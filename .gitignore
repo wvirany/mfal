@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.ipynb_checkpoints
+
+# Data (don't commit large files)
+*.csv
+*.pkl
+*.h5
+*.sqlite
+*.db
+
+# Results
+results/
+figures/*.png
+figures/*.pdf
+figures/*.svg
+
+# Environment
+.env
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
