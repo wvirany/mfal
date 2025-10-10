@@ -20,7 +20,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["molcollisions"]
+packages = ["mfal"]
 
 [tool.black]
 line-length = 100
