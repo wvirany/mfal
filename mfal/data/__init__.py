@@ -27,7 +27,7 @@ def compute_top_k_indices(scores, k_percent=1.0):
     top_indices = set(np.argsort(scores)[:k])
     threshold = np.sort(scores)[k]
 
-    return top_indices, threshold
+    return set(top_indices), threshold
 
 
 def get_oracle_function(df, score_type: str = "mmgbsa"):

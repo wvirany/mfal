@@ -5,7 +5,7 @@ import pytest
 
 from mfal.data import load_mcl1_data
 from mfal.utils.al_loop import initialize_centroid
-from mfal.utils.embeddings import get_or_generate_embeddings
+from mfal.utils.embeddings import get_embeddings
 
 
 @pytest.fixture
@@ -26,7 +26,7 @@ def test_cache_dir(tmp_path):
 
 def test_morgan_fp_generation(sample_smiles, test_cache_dir):
     """Test Morgan FP generation."""
-    embeddings = get_or_generate_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
+    embeddings = get_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
 
     assert embeddings.shape == (len(sample_smiles), 2048)
     assert not np.all(embeddings == 0), "All embeddings are zero"
@@ -35,10 +35,10 @@ def test_morgan_fp_generation(sample_smiles, test_cache_dir):
 def test_caching_works(sample_smiles, test_cache_dir):
     """Test that caching works."""
 
-    embeddings1 = get_or_generate_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
+    embeddings1 = get_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
 
     # Should load from cache
-    embeddings2 = get_or_generate_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
+    embeddings2 = get_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
 
     # Check cache file exists
     cache_file = os.path.join(test_cache_dir, "morgan_fp.npz")
@@ -50,7 +50,7 @@ def test_caching_works(sample_smiles, test_cache_dir):
 
 def test_centroid_initialization(sample_smiles, test_cache_dir):
     """Test centroid initialization."""
-    embeddings = get_or_generate_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
+    embeddings = get_embeddings(sample_smiles, "morgan_fp", cache_dir=test_cache_dir)
 
     centroid_idx = initialize_centroid(embeddings)
     centroid = embeddings[centroid_idx]
@@ -64,7 +64,7 @@ def test_full_dataset_generation():
     df = load_mcl1_data()
     smiles = df["prot_smiles"].tolist()
 
-    embeddings = get_or_generate_embeddings(smiles, "morgan_fp")
+    embeddings = get_embeddings(smiles, "morgan_fp")
 
     assert embeddings.shape[0] == len(
         smiles

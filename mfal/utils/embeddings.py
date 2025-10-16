@@ -52,7 +52,7 @@ def load_embeddings(filename: str):
     return np.load(filename)["embeddings"]
 
 
-def get_or_generate_embeddings(
+def get_embeddings(
     smiles_list: List[str],
     embedding_type: str = "morgan_fp",
     cache_dir: str = "mfal/data/embeddings",

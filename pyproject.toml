@@ -11,6 +11,10 @@ dependencies = [
     "numpy",
     "pandas",
     "rdkit",
+    "torch",
+    "gpytorch",
+    "botorch",
+    "tqdm",
 ]
 
 [project.optional-dependencies]
