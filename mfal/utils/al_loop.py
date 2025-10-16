@@ -22,6 +22,7 @@ def run_al_loop(
     initial_idx: int = None,
     score_type: str = "docking",
     random_seed: int = 42,
+    device: str = "auto",
     verbose: bool = True,
 ):
     """
@@ -32,8 +33,16 @@ def run_al_loop(
     torch.manual_seed(random_seed)
     np.random.seed(random_seed)
 
+    # Set device
+    if device == "auto":
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    elif device not in ["cuda", "cpu"]:
+        raise ValueError(f"Invalid device: {device}")
+    device = torch.device(device)
+    print(f"Using device: {device}")
+
     # Convert embeddings to tensor
-    embeddings_tensor = torch.tensor(embeddings, dtype=torch.float64)
+    embeddings_tensor = torch.tensor(embeddings, dtype=torch.float64, device=device)
 
     # Initialize with centroid
     if initial_idx is None:
@@ -47,9 +56,9 @@ def run_al_loop(
     train_x = embeddings_tensor[queried_indices]
 
     # Negate scores: maximizing negative binding affinity (since lower binding affinity is better)
-    train_y = torch.tensor([[-queried_scores[0]]], dtype=torch.float64)
+    train_y = torch.tensor([[-queried_scores[0]]], dtype=torch.float64, device=device)
 
-    # Initialize model
+    # Initialize model (will use same device as train_x)
     model, mll = initialize_gp(train_x, train_y)
 
     # Tracking metrics
@@ -79,7 +88,7 @@ def run_al_loop(
 
         # Update training data
         new_x = embeddings_tensor[next_idx].unsqueeze(0)  # (1, d)
-        new_y = torch.tensor([[-next_score]], dtype=torch.float64)
+        new_y = torch.tensor([[-next_score]], dtype=torch.float64, device=device)
         train_x = torch.cat([train_x, new_x], dim=0)  # (n+1, d)
         train_y = torch.cat([train_y, new_y], dim=0)  # (n+1, 1)
 

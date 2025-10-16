@@ -48,6 +48,7 @@ def main(args):
         n_iterations=args.n_iterations,
         score_type=args.score_type,
         random_seed=args.seed,
+        device=args.device,
         verbose=True,
     )
 
@@ -71,6 +72,9 @@ if __name__ == "__main__":
     parser.add_argument("--n_iterations", type=int, default=3500, help="Number of AL iterations")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--output_dir", default="results/single_fidelity", help="Output directory")
+    parser.add_argument(
+        "--device", default="auto", choices=["auto", "cuda", "cpu"], help="Device to use"
+    )
 
     args = parser.parse_args()
 
