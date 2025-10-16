@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mfal"
-version = "0.1.0"  # Start with 0.1.0 for "first working version"
+version = "0.1.0"
 description = "Multi-fidelity active learning"
 requires-python = ">=3.8"
 dependencies = [
