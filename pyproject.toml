@@ -15,6 +15,7 @@ dependencies = [
     "gpytorch",
     "botorch",
     "tqdm",
+    "wandb",
 ]
 
 [project.optional-dependencies]

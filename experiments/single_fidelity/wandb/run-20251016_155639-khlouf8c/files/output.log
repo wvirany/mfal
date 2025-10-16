@@ -1,0 +1,21 @@
+
+======================================================================
+Single-Fidelity Active Learning Baseline
+======================================================================
+Embedding: morgan_fp
+Score type: docking
+Iterations: 5
+Seed: 42
+======================================================================
+
+Loading data...
+Loaded 59356 molecules
+Setting up docking score oracle...
+Top-1% threshold: -11.286
+Traceback (most recent call last):
+  File "/home/wvir/Research/mfal/experiments/single_fidelity/run_baseline.py", line 117, in <module>
+    main(args)
+  File "/home/wvir/Research/mfal/experiments/single_fidelity/run_baseline.py", line 54, in main
+    wandb.confid.update({
+    ^^^^^^^^^^^^
+AttributeError: module 'wandb' has no attribute 'confid'

@@ -3,6 +3,8 @@
 import argparse
 import time
 
+import wandb
+
 from mfal.data import compute_top_k_indices, get_oracle_function, load_mcl1_data
 from mfal.utils.al_loop import run_al_loop
 from mfal.utils.embeddings import get_embeddings
@@ -13,6 +15,19 @@ def main(args):
 
     # Start timer
     start_time = time.time()
+
+    # Initialize wandb
+    if args.wandb_mode != "disabled":
+        run_name = f"single_fidelity_{args.embedding}_{args.score_type}_seed{args.seed}"
+        run = wandb.init(
+            project="MFAL",
+            name=run_name,
+            config=args,
+            tags=["single-fidelity", args.embedding, args.score_type, "baseline"],
+            mode=args.wandb_mode,
+        )
+    else:
+        run = None
 
     print("\n" + "=" * 70)
     print("Single-Fidelity Active Learning Baseline")
@@ -35,13 +50,22 @@ def main(args):
     top1_indices, top1_threshold = compute_top_k_indices(all_scores, k_percent=0.01)
     print(f"Top-1% threshold: {top1_threshold:.3f}")
 
+    if run is not None:
+        wandb.config.update(
+            {
+                "n_molecules": len(smiles),
+                "top1_threshold": top1_threshold,
+                "n_top1_molecules": len(top1_indices),
+            }
+        )
+
     # Get embeddings
     print("Getting embeddings...")
     embeddings = get_embeddings(smiles, args.embedding)
     print(f"Embedding shape: {embeddings.shape}")
 
     # Run AL
-    _ = run_al_loop(
+    results = run_al_loop(
         embeddings=embeddings,
         oracle_fn=oracle_fn,
         top1_indices=top1_indices,
@@ -50,11 +74,26 @@ def main(args):
         random_seed=args.seed,
         device=args.device,
         verbose=True,
+        wandb_run=run,
     )
 
     # Timing
     elapsed_time = time.time() - start_time
     print(f"Time taken: {elapsed_time:.2f} seconds")
+
+    # Log final summary to wandb
+    if run is not None:
+        wandb.summary.update(
+            {
+                "final_top1_retrieval": results["top1_retrieval"][-1],
+                "final_best_score": results["best_scores"][-1],
+                "total_time_seconds": elapsed_time,
+                "total_queries": len(results["queried_indices"]),
+            }
+        )
+
+        # Finish the run
+        wandb.finish()
 
 
 if __name__ == "__main__":
@@ -74,6 +113,12 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", default="results/single_fidelity", help="Output directory")
     parser.add_argument(
         "--device", default="auto", choices=["auto", "cuda", "cpu"], help="Device to use"
+    )
+    parser.add_argument(
+        "--wandb_mode",
+        default="online",
+        choices=["offline", "online", "disabled"],
+        help="Wandb mode",
     )
 
     args = parser.parse_args()

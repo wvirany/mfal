@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import wandb
 from botorch.fit import fit_gpytorch_mll
 from tqdm import tqdm
 
@@ -25,6 +26,7 @@ def run_al_loop(
     device: str = "auto",
     batch_size: int = 100,
     verbose: bool = True,
+    wandb_run: wandb.Run = None,
 ):
     """
     Run active learning loop.
@@ -112,6 +114,19 @@ def run_al_loop(
 
         top1_retrieval.append(retrieval)
         best_scores.append(best_score)
+
+        # Log to wandb
+        if wandb_run is not None:
+            wandb.log(
+                {
+                    "iteration": iteration,
+                    "top1_retrieval": retrieval,
+                    "best_score": best_score,
+                    "current_score": next_score,
+                    "n_top1_found": len(found_top1),
+                },
+                step=iteration + 1,
+            )
 
         if verbose and (iteration % 100 == 0):
             print(f"\n--- Iteration {iteration+1} ---")

@@ -1,0 +1,40 @@
+
+======================================================================
+Single-Fidelity Active Learning Baseline
+======================================================================
+Embedding: morgan_fp
+Score type: docking
+Iterations: 5
+Seed: 42
+======================================================================
+
+Loading data...
+Loaded 59356 molecules
+Setting up docking score oracle...
+Top-1% threshold: -11.286
+Getting embeddings...
+Embedding shape: (59356, 2048)
+Using device: cpu
+
+============================================================
+Running active learning loop
+Dataset size: 59356
+Iterations: 5
+Score type: docking
+Batch size: 100
+Initial: idx=56422, score=-8.837
+============================================================
+AL progress: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:21<00:00,  4.33s/it]
+
+
+--- Iteration 1 ---
+  Top-1% retrieval: 0.00% (0/5)
+  Best score: -8.837
+  Latest score: -8.057
+
+============================================================
+Active learning complete!
+============================================================
+Top-1% retrieval: 0.00%
+Best score: -9.558
+Time taken: 29.14 seconds
