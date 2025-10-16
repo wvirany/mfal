@@ -1,10 +1,12 @@
-import os
+from pathlib import Path
 from typing import List
 
 import numpy as np
 from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from tqdm import tqdm
+
+DEFAULT_CACHE_DIR = Path(__file__).parent.parent / "data" / "embeddings"
 
 
 # Compute ECFP4 fingerprints:
@@ -55,16 +57,20 @@ def load_embeddings(filename: str):
 def get_embeddings(
     smiles_list: List[str],
     embedding_type: str = "morgan_fp",
-    cache_dir: str = "mfal/data/embeddings",
+    cache_dir: str = None,
     **kwargs,
 ):
     """Get or generate embeddings."""
 
-    os.makedirs(cache_dir, exist_ok=True)
-    cache_path = os.path.join(cache_dir, f"{embedding_type}.npz")
+    if cache_dir is None:
+        cache_dir = DEFAULT_CACHE_DIR
+
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    cache_path = cache_dir / f"{embedding_type}.npz"
 
     # Try to load from cache
-    if os.path.exists(cache_path):
+    if cache_path.exists():
         return load_embeddings(cache_path)
 
     # Generate embeddings
