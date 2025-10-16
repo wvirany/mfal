@@ -42,6 +42,11 @@ def run_al_loop(
     device = torch.device(device)
     print(f"Using device: {device}")
 
+    # MinMax scaling of embeddings
+    emb_min = embeddings.min(axis=0, keepdims=True)
+    emb_max = embeddings.max(axis=0, keepdims=True)
+    embeddings = (embeddings - emb_min) / (emb_max - emb_min + 1e-8)  # Avoid division by zero
+
     # Initialize with centroid
     if initial_idx is None:
         initial_idx = initialize_centroid(embeddings)
