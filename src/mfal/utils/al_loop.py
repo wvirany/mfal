@@ -23,7 +23,7 @@ def run_al_loop(
     score_type: str = "docking",
     random_seed: int = 42,
     device: str = "auto",
-    batch_size: int = 1000,
+    batch_size: int = 100,
     verbose: bool = True,
 ):
     """
@@ -49,7 +49,8 @@ def run_al_loop(
 
     # Initialize with centroid
     if initial_idx is None:
-        initial_idx = initialize_centroid(embeddings)
+        # initial_idx = initialize_centroid(embeddings)
+        initial_idx = np.random.randint(0, len(embeddings))
 
     # Initialize queried indices
     queried_indices = [initial_idx]
