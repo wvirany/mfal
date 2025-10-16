@@ -23,8 +23,9 @@ dev = [
     "pre-commit",
 ]
 
-[tool.setuptools]
-packages = ["mfal"]
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mfal*"]
 
 [tool.black]
 line-length = 100
