@@ -23,6 +23,7 @@ def run_al_loop(
     score_type: str = "docking",
     random_seed: int = 42,
     device: str = "auto",
+    batch_size: int = 1000,
     verbose: bool = True,
 ):
     """
@@ -41,9 +42,6 @@ def run_al_loop(
     device = torch.device(device)
     print(f"Using device: {device}")
 
-    # Convert embeddings to tensor
-    embeddings_tensor = torch.tensor(embeddings, dtype=torch.float64, device=device)
-
     # Initialize with centroid
     if initial_idx is None:
         initial_idx = initialize_centroid(embeddings)
@@ -53,12 +51,13 @@ def run_al_loop(
     queried_scores = [oracle_fn(initial_idx)]
 
     # Prepare training data
-    train_x = embeddings_tensor[queried_indices]
-
-    # Negate scores: maximizing negative binding affinity (since lower binding affinity is better)
+    train_x = torch.tensor(embeddings[queried_indices], dtype=torch.float64, device=device)
     train_y = torch.tensor([[-queried_scores[0]]], dtype=torch.float64, device=device)
 
-    # Initialize model (will use same device as train_x)
+    # Keep embeddings on CPU
+    embeddings_tensor = torch.tensor(embeddings, dtype=torch.float64)
+
+    # Initialize model
     model, mll = initialize_gp(train_x, train_y)
 
     # Tracking metrics
@@ -71,15 +70,20 @@ def run_al_loop(
     print(f"Dataset size: {len(embeddings)}")
     print(f"Iterations: {n_iterations}")
     print(f"Score type: {score_type}")
+    print(f"Batch size: {batch_size}")
     print(f"Initial: idx={initial_idx}, score={queried_scores[0]:.3f}")
     print(f"{'='*60}\n")
 
     for iteration in tqdm(range(n_iterations), desc="AL progress"):
+
         # Fit GP hyperparameters
         fit_gpytorch_mll(mll)
+        model.eval()
 
         # Select next query
-        next_idx = select_next_molecule(model, train_y, embeddings_tensor, queried_indices)
+        next_idx = select_next_molecule(
+            model, train_y, embeddings_tensor, queried_indices, batch_size
+        )
 
         # Evaluate oracle
         next_score = oracle_fn(next_idx)
@@ -87,7 +91,7 @@ def run_al_loop(
         queried_scores.append(next_score)
 
         # Update training data
-        new_x = embeddings_tensor[next_idx].unsqueeze(0)  # (1, d)
+        new_x = torch.tensor(embeddings[next_idx], dtype=torch.float64, device=device).unsqueeze(0)
         new_y = torch.tensor([[-next_score]], dtype=torch.float64, device=device)
         train_x = torch.cat([train_x, new_x], dim=0)  # (n+1, d)
         train_y = torch.cat([train_y, new_y], dim=0)  # (n+1, 1)
