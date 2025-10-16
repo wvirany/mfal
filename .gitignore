@@ -1,4 +1,5 @@
 docs/
+mfal_env/
 
 # Python
 __pycache__/
