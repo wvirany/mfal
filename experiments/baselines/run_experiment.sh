@@ -3,9 +3,9 @@
 #SBATCH --mem=32G
 #SBATCH --cpus-per-task=4
 #SBATCH --gres=gpu:l40s:1
-#SBATCH --job-name=single_fidelity_baseline
-#SBATCH --output=logs/single_fidelity_baseline_%A.out
-#SBATCH --error=logs/single_fidelity_baseline_%A.err
+#SBATCH --job-name=blr_single_fidelity_baseline
+#SBATCH --output=../../logs/single_fidelity_baseline_%A.out
+#SBATCH --error=../../logs/single_fidelity_baseline_%A.err
 
 # Load environment
 module load python/3.11 scipy-stack rdkit/2023.09.5 cuda/12.6
@@ -14,7 +14,7 @@ cd ~/scratch/mfal
 
 source mfal_env/bin/activate
 
-cd experiments/single_fidelity
+cd experiments/baselines
 
 # Run experiment
-python run_baseline.py --n_iterations=3500 --output_dir ../../results/single_fidelity_baseline
+python run_baseline.py --model blr --acquisition ei --score_type mmgbsa --n_iterations=3500 --n_initial 100 --save_results
