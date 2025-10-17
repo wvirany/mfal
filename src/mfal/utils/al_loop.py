@@ -90,7 +90,7 @@ def run_al_loop(
             model=model,
             embeddings=embeddings_norm,
             queried_indices=set(queried_indices),
-            current_best=min(queried_scores),
+            current_best=-min(queried_scores),
         )
 
         # Evaluate oracle
