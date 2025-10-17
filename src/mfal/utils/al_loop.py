@@ -20,6 +20,7 @@ def run_al_loop(
     oracle_fn,  # Function: idx -> score
     top1_indices,  # Set of ground truth top 1% indices
     n_iterations: int = 1000,
+    n_initial: int = 100,
     initial_idx: int = None,
     score_type: str = "docking",
     random_seed: int = 42,
@@ -49,18 +50,27 @@ def run_al_loop(
     emb_max = embeddings.max(axis=0, keepdims=True)
     embeddings = (embeddings - emb_min) / (emb_max - emb_min + 1e-8)  # Avoid division by zero
 
-    # Initialize with centroid
-    if initial_idx is None:
-        # initial_idx = initialize_centroid(embeddings)
-        initial_idx = np.random.randint(0, len(embeddings))
+    # # Initialize with centroid
+    # if initial_idx is None:
+    #     # initial_idx = initialize_centroid(embeddings)
+    #     initial_idx = np.random.randint(0, len(embeddings))
 
-    # Initialize queried indices
-    queried_indices = [initial_idx]
-    queried_scores = [oracle_fn(initial_idx)]
+    # # Initialize queried indices
+    # queried_indices = [initial_idx]
+    # queried_scores = [oracle_fn(initial_idx)]
+
+    # Initialize with random sampling
+    initial_indices = np.random.choice(
+        len(embeddings),
+        size=n_initial,
+        replace=False,
+    )
+    queried_indices = initial_indices.tolist()
+    queried_scores = [oracle_fn(idx) for idx in initial_indices]
 
     # Prepare training data
     train_x = torch.tensor(embeddings[queried_indices], dtype=torch.float64, device=device)
-    train_y = torch.tensor([[-queried_scores[0]]], dtype=torch.float64, device=device)
+    train_y = torch.tensor([[-s] for s in queried_scores], dtype=torch.float64, device=device)
 
     # Keep embeddings on CPU
     embeddings_tensor = torch.tensor(embeddings, dtype=torch.float64)
@@ -79,10 +89,12 @@ def run_al_loop(
     print(f"Iterations: {n_iterations}")
     print(f"Score type: {score_type}")
     print(f"Batch size: {batch_size}")
-    print(f"Initial: idx={initial_idx}, score={queried_scores[0]:.3f}")
+    print(
+        f"Initial: n={n_initial}, best={min(queried_scores):.3f}, mean={np.mean(queried_scores):.3f}"
+    )
     print(f"{'='*60}\n")
 
-    for iteration in tqdm(range(n_iterations), desc="AL progress"):
+    for iteration in tqdm(range(n_iterations - n_initial), desc="AL progress"):
 
         # Fit GP hyperparameters
         fit_gpytorch_mll(mll)
