@@ -1,8 +1,10 @@
 """Run single-fidelity active learning baseline."""
 
 import argparse
+import pickle
 import time
 import warnings
+from pathlib import Path
 
 import wandb
 
@@ -97,6 +99,15 @@ def main(args):
 
         # Finish the run
         wandb.finish()
+
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    output_file = output_dir / f"{args.embedding}_{args.score_type}_seed{args.seed}.pkl"
+    with open(output_file, "wb") as f:
+        pickle.dump(results, f)
+
+    print(f"Results saved to {output_file}")
 
 
 if __name__ == "__main__":
