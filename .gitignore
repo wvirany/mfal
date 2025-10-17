@@ -21,10 +21,9 @@ __pycache__/
 mfal/data/embeddings/
 
 # Results
-results/
-figures/*.png
-figures/*.pdf
-figures/*.svg
+*.png
+*.pdf
+*.svg
 
 # Environment
 .env
