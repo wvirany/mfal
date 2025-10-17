@@ -105,7 +105,7 @@ def run_al_loop(
         train_y = torch.cat([train_y, new_y], dim=0)  # (n+1, 1)
 
         # Update model
-        model.set_train_data(inputs=train_x, targets=train_y, strict=False)
+        model.set_train_data(inputs=train_x, targets=train_y.squeeze(-1), strict=False)
 
         # Compute metrics
         found_top1 = set(queried_indices) & top1_indices

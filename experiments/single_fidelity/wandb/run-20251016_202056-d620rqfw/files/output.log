@@ -1,0 +1,86 @@
+
+======================================================================
+Single-Fidelity Active Learning Baseline
+======================================================================
+Embedding: morgan_fp
+Score type: docking
+Iterations: 10
+Seed: 42
+======================================================================
+
+Loading data...
+Loaded 59356 molecules
+Setting up docking score oracle...
+Top-1% threshold: -11.286
+Getting embeddings...
+Embedding shape: (59356, 2048)
+Using device: cuda
+
+============================================================
+Running active learning loop
+Dataset size: 59356
+Iterations: 10
+Score type: docking
+Batch size: 100
+Initial: idx=56422, score=-8.837
+============================================================
+AL progress:  10%|██████████▋                                                                                                | 1/10 [00:02<00:26,  2.89s/it]
+
+
+--- Iteration 1 ---
+  Top-1% retrieval: 0.00% (0/5)
+  Best score: -8.837
+  Latest score: -8.057
+Traceback (most recent call last):
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/gpytorch/models/exact_prediction_strategies.py", line 47, in __init__
+    train_labels = train_labels.reshape(
+                   ^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: shape '[2, 2]' is invalid for input of size 2
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/scratch/wvirany/mfal/experiments/single_fidelity/run_baseline.py", line 130, in <module>
+    main(args)
+  File "/scratch/wvirany/mfal/experiments/single_fidelity/run_baseline.py", line 72, in main
+    results = run_al_loop(
+              ^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/src/mfal/utils/al_loop.py", line 92, in run_al_loop
+    next_idx = select_next_molecule(
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/src/mfal/utils/acquisition.py", line 44, in select_next_molecule
+    batch_ei = EI(batch_embeddings)  # (batch_size,)
+               ^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/botorch/utils/transforms.py", line 288, in decorated
+    output = method(acqf, X, *args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/botorch/acquisition/analytic.py", line 418, in forward
+    mean, sigma = self._mean_and_sigma(X)
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/botorch/acquisition/analytic.py", line 106, in _mean_and_sigma
+    posterior = self.model.posterior(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/botorch/models/gpytorch.py", line 399, in posterior
+    mvn = self(X)
+          ^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/gpytorch/models/exact_gp.py", line 294, in __call__
+    self.prediction_strategy = prediction_strategy(
+                               ^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/gpytorch/models/exact_prediction_strategies.py", line 37, in prediction_strategy
+    return cls(train_inputs, train_prior_dist, train_labels, likelihood)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/gpytorch/kernels/scale_kernel.py", line 124, in prediction_strategy
+    return self.base_kernel.prediction_strategy(train_inputs, train_prior_dist, train_labels, likelihood)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/gpytorch/kernels/kernel.py", line 445, in prediction_strategy
+    return exact_prediction_strategies.DefaultPredictionStrategy(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/scratch/wvirany/mfal/mfal_env/lib/python3.11/site-packages/gpytorch/models/exact_prediction_strategies.py", line 51, in __init__
+    raise RuntimeError(
+RuntimeError: Flattening the training labels failed. The most common cause of this error is that the shapes of the prior mean and the training labels are mismatched. The shape of the train targets is torch.Size([2, 1]), while the reported shape of the mean is torch.Size([2]).

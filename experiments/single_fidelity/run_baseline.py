@@ -10,6 +10,10 @@ from mfal.utils.al_loop import run_al_loop
 from mfal.utils.embeddings import get_embeddings
 
 
+import warnings
+warnings.filterwarnings('ignore')
+
+
 def main(args):
     """Run single-fidelity active learning baseline."""
 

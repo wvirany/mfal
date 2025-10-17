@@ -1,0 +1,27 @@
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_setup.py:_flush():81] Current SDK version is 0.21.2
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_setup.py:_flush():81] Configure stats pid to 2861494
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_setup.py:_flush():81] Loading settings from /home/wvirany/.config/wandb/settings
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_setup.py:_flush():81] Loading settings from /scratch/wvirany/mfal/experiments/single_fidelity/wandb/settings
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_init.py:setup_run_log_directory():686] Logging user logs to /scratch/wvirany/mfal/experiments/single_fidelity/wandb/run-20251016_202343-3uqkju71/logs/debug.log
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_init.py:setup_run_log_directory():687] Logging internal logs to /scratch/wvirany/mfal/experiments/single_fidelity/wandb/run-20251016_202343-3uqkju71/logs/debug-internal.log
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_init.py:init():813] calling init triggers
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_init.py:init():818] wandb.init called with sweep_config: {}
+config: {'embedding': 'morgan_fp', 'score_type': 'docking', 'n_iterations': 10, 'seed': 42, 'output_dir': 'results/single_fidelity', 'device': 'auto', 'wandb_mode': 'online', '_wandb': {}}
+2025-10-16 20:23:44,010 INFO    MainThread:2861494 [wandb_init.py:init():854] starting backend
+2025-10-16 20:23:44,227 INFO    MainThread:2861494 [wandb_init.py:init():857] sending inform_init request
+2025-10-16 20:23:44,238 INFO    MainThread:2861494 [wandb_init.py:init():865] backend started and connected
+2025-10-16 20:23:44,245 INFO    MainThread:2861494 [wandb_init.py:init():936] updated telemetry
+2025-10-16 20:23:44,260 INFO    MainThread:2861494 [wandb_init.py:init():960] communicating run to backend with 90.0 second timeout
+2025-10-16 20:23:44,655 INFO    MainThread:2861494 [wandb_init.py:init():1011] starting run threads in backend
+2025-10-16 20:23:44,798 INFO    MainThread:2861494 [wandb_run.py:_console_start():2494] atexit reg
+2025-10-16 20:23:44,798 INFO    MainThread:2861494 [wandb_run.py:_redirect():2342] redirect: wrap_raw
+2025-10-16 20:23:44,798 INFO    MainThread:2861494 [wandb_run.py:_redirect():2411] Wrapping output streams.
+2025-10-16 20:23:44,798 INFO    MainThread:2861494 [wandb_run.py:_redirect():2434] Redirects installed.
+2025-10-16 20:23:44,805 INFO    MainThread:2861494 [wandb_init.py:init():1057] run started, returning control to user process
+2025-10-16 20:23:44,982 INFO    MainThread:2861494 [wandb_run.py:_config_callback():1380] config_cb None None {'n_molecules': 59356, 'top1_threshold': -11.286, 'n_top1_molecules': 5}
+2025-10-16 20:24:06,842 INFO    MainThread:2861494 [wandb_run.py:_finish():2260] finishing run wvirany-university-of-toronto/MFAL/3uqkju71
+2025-10-16 20:24:06,843 INFO    MainThread:2861494 [wandb_run.py:_atexit_cleanup():2459] got exitcode: 0
+2025-10-16 20:24:06,843 INFO    MainThread:2861494 [wandb_run.py:_restore():2441] restore
+2025-10-16 20:24:06,844 INFO    MainThread:2861494 [wandb_run.py:_restore():2447] restore done
+2025-10-16 20:24:07,442 INFO    MainThread:2861494 [wandb_run.py:_footer_sync_info():3855] logging synced files
