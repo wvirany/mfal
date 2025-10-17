@@ -45,7 +45,7 @@ class ExpectedImprovement(AcquisitionFunction):
 
         # Get unqueried indices
         all_indices = set(range(len(embeddings)))
-        unqueried_indices = all_indices - queried_indices
+        unqueried_indices = list(all_indices - queried_indices)
 
         if len(unqueried_indices) == 0:
             raise ValueError("No unqueried indices left")
