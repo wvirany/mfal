@@ -24,7 +24,7 @@ def run_al_loop(
     score_type: str = "docking",
     random_seed: int = 42,
     device: str = "auto",
-    batch_size: int = 100,
+    batch_size: int = 1000,
     verbose: bool = True,
     wandb_run: wandb.Run = None,
 ):

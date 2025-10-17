@@ -1,5 +1,6 @@
 docs/
 mfal_env/
+wandb/
 
 # Python
 __pycache__/
