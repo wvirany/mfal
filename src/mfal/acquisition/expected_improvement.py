@@ -75,7 +75,7 @@ class ExpectedImprovement(AcquisitionFunction):
         std = np.maximum(std, 1e-9)
 
         # Compute improvement
-        improvement = f_best - mean - self.beta
+        improvement = mean - f_best - self.beta
 
         # Standardize
         Z = improvement / std
