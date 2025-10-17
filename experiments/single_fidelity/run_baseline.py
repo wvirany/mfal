@@ -2,6 +2,7 @@
 
 import argparse
 import time
+import warnings
 
 import wandb
 
@@ -9,9 +10,7 @@ from mfal.data import compute_top_k_indices, get_oracle_function, load_mcl1_data
 from mfal.utils.al_loop import run_al_loop
 from mfal.utils.embeddings import get_embeddings
 
-
-import warnings
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 
 def main(args):
@@ -51,7 +50,7 @@ def main(args):
     # Get oracle and ground truth
     print(f"Setting up {args.score_type} score oracle...")
     oracle_fn, all_scores = get_oracle_function(df, args.score_type)
-    top1_indices, top1_threshold = compute_top_k_indices(all_scores, k_percent=0.01)
+    top1_indices, top1_threshold = compute_top_k_indices(all_scores, k_percent=1.0)
     print(f"Top-1% threshold: {top1_threshold:.3f}")
 
     if run is not None:

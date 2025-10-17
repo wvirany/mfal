@@ -141,7 +141,7 @@ def run_al_loop(
             )
 
         if verbose and (iteration % 100 == 0):
-            print(f"\n--- Iteration {iteration+1} ---")
+            print(f"\n--- Iteration {iteration+n_initial+1} ---")
             print(f"  Top-1% retrieval: {retrieval:.2f}% ({len(found_top1)}/{len(top1_indices)})")
             print(f"  Best score: {best_score:.3f}")
             print(f"  Latest score: {next_score:.3f}")
