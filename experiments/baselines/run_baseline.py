@@ -49,11 +49,10 @@ def create_acquisition(acquisition_type: str, random_seed: int = 42):
     """Create acquisition function based on type."""
     if acquisition_type == "random":
         from mfal.acquisition.random import RandomAcquisition
-
         return RandomAcquisition(random_state=random_seed)
     elif acquisition_type == "ei":
-        # TODO: Refactor EI
-        raise NotImplementedError("EI acquisition not implemented yet")
+        from mfal.acquisition.expected_improvement import ExpectedImprovement
+        return ExpectedImprovement()
     else:
         raise ValueError(f"Invalid acquisition type: {acquisition_type}")
 
