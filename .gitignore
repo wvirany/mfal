@@ -1,6 +1,13 @@
 docs/
+notebooks/
 mfal_env/
-*/wandb/
+
+# WandB
+wandb/
+*.wandb
+
+# Logs
+logs/
 
 # Python
 __pycache__/

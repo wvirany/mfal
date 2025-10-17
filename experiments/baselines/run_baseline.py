@@ -1,18 +1,61 @@
 """Run single-fidelity active learning baseline."""
 
 import argparse
+import os
 import pickle
 import time
 import warnings
 from pathlib import Path
 
 import wandb
-
 from mfal.data import compute_top_k_indices, get_oracle_function, load_mcl1_data
 from mfal.utils.al_loop import run_al_loop
 from mfal.utils.embeddings import get_embeddings
 
 warnings.filterwarnings("ignore")
+
+
+# Get repo root (two levels up from this file)
+REPO_ROOT = Path(__file__).parent.parent.parent
+RESULTS_DIR = REPO_ROOT / "results" / "baselines"
+
+# Set wandb directory (before any wandb imports/init)
+WANDB_DIR = REPO_ROOT / "wandb"
+WANDB_DIR.mkdir(parents=True, exist_ok=True)
+os.environ["WANDB_DIR"] = str(WANDB_DIR)
+
+
+def initialize_model(model_type: str):
+    """Initialize model based on type."""
+    if model_type == "blr":
+        from mfal.models.bayesian_ridge import BayesianRidgeModel
+
+        return BayesianRidgeModel()
+    elif model_type == "random":
+        from mfal.models.random_model import RandomModel
+
+        return RandomModel()
+    elif model_type == "gp":
+        # TODO: Refactor GP
+        raise NotImplementedError("GP model not implemented yet")
+        from mfal.models.gp import TanimotoGP
+
+        return TanimotoGP()
+    else:
+        raise ValueError(f"Invalid model type: {model_type}")
+
+
+def create_acquisition(acquisition_type: str, random_seed: int = 42):
+    """Create acquisition function based on type."""
+    if acquisition_type == "random":
+        from mfal.acquisition.random import RandomAcquisition
+
+        return RandomAcquisition(random_state=random_seed)
+    elif acquisition_type == "ei":
+        # TODO: Refactor EI
+        raise NotImplementedError("EI acquisition not implemented yet")
+    else:
+        raise ValueError(f"Invalid acquisition type: {acquisition_type}")
 
 
 def main(args):
@@ -35,9 +78,10 @@ def main(args):
         run = None
 
     print("\n" + "=" * 70)
-    print("Single-Fidelity Active Learning Baseline")
+    print("Baseline Active Learning Experiment")
     print("=" * 70)
-    print(f"Embedding: {args.embedding}")
+    print(f"Model: {args.model}")
+    print(f"Acquisition: {args.acquisition}")
     print(f"Score type: {args.score_type}")
     print(f"Iterations: {args.n_iterations:,}")
     print(f"Seed: {args.seed}")
@@ -69,15 +113,24 @@ def main(args):
     embeddings = get_embeddings(smiles, args.embedding)
     print(f"Embedding shape: {embeddings.shape}")
 
+    # Create model and acquisition function
+    print(f"\nInitializing {args.model} model...")
+    model = initialize_model(args.model)
+
+    print(f"Initializing {args.acquisition} acquisition function...")
+    acq_func = create_acquisition(args.acquisition, random_seed=args.seed)
+
     # Run AL
     results = run_al_loop(
         embeddings=embeddings,
         oracle_fn=oracle_fn,
         top1_indices=top1_indices,
+        model=model,
+        acq_func=acq_func,
         n_iterations=args.n_iterations,
+        n_initial=args.n_initial,
         score_type=args.score_type,
         random_seed=args.seed,
-        device=args.device,
         verbose=True,
         wandb_run=run,
     )
@@ -100,19 +153,30 @@ def main(args):
         # Finish the run
         wandb.finish()
 
-    output_dir = Path(args.output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
+    if args.save_results:
+        RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
-    output_file = output_dir / f"{args.embedding}_{args.score_type}_seed{args.seed}.pkl"
-    with open(output_file, "wb") as f:
-        pickle.dump(results, f)
+        output_file = (
+            RESULTS_DIR / f"{args.model}_{args.acquisition}_{args.score_type}_seed{args.seed}.pkl"
+        )
+        with open(output_file, "wb") as f:
+            pickle.dump(results, f)
 
-    print(f"Results saved to {output_file}")
+        print(f"Results saved to {output_file}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        "--model", default="blr", choices=["blr", "random", "gp"], help="Model type"
+    )
+    parser.add_argument(
+        "--acquisition",
+        default="random",
+        choices=["random", "ei"],
+        help="Acquisition function type",
+    )
     parser.add_argument(
         "--embedding",
         default="morgan_fp",
@@ -123,18 +187,15 @@ if __name__ == "__main__":
         "--score_type", default="docking", choices=["docking", "mmgbsa"], help="Oracle score type"
     )
     parser.add_argument("--n_iterations", type=int, default=3500, help="Number of AL iterations")
+    parser.add_argument("--n_initial", type=int, default=100, help="Number of initial points")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--output_dir", default="results/single_fidelity", help="Output directory")
-    parser.add_argument(
-        "--device", default="auto", choices=["auto", "cuda", "cpu"], help="Device to use"
-    )
     parser.add_argument(
         "--wandb_mode",
         default="online",
         choices=["offline", "online", "disabled"],
         help="Wandb mode",
     )
-
+    parser.add_argument("--save_results", action="store_true", help="Save results")
     args = parser.parse_args()
 
     main(args)

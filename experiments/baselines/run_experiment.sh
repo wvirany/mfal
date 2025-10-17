@@ -6,7 +6,6 @@
 #SBATCH --job-name=single_fidelity_baseline
 #SBATCH --output=logs/single_fidelity_baseline_%A.out
 #SBATCH --error=logs/single_fidelity_baseline_%A.err
-#SBATCH --requeue
 
 # Load environment
 module load python/3.11 scipy-stack rdkit/2023.09.5 cuda/12.6
