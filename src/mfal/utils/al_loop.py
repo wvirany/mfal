@@ -67,6 +67,10 @@ def run_al_loop(
     y_train = -np.array(queried_scores)  # Negate for maximization
     model.fit(X_train, y_train)
 
+    # Initialize UCB parameter
+    if isinstance(acq_func, AcquisitionFunction):
+        acq_func.set_beta(beta=10.0)
+
     # Tracking metrics
     top1_retrieval = []
     best_scores = []
@@ -84,6 +88,11 @@ def run_al_loop(
 
     # Main AL loop
     for iteration in tqdm(range(n_iterations - n_initial), desc="AL progress"):
+
+        # UCB beta schedule
+        if isinstance(acq_func, AcquisitionFunction):
+            b = 10.0 / (iteration + 1)
+            acq_func.set_beta(beta=b)
 
         # Select next query
         next_idx = acq_func.select_next(

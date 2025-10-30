@@ -49,10 +49,16 @@ def create_acquisition(acquisition_type: str, random_seed: int = 42):
     """Create acquisition function based on type."""
     if acquisition_type == "random":
         from mfal.acquisition.random import RandomAcquisition
+
         return RandomAcquisition(random_state=random_seed)
     elif acquisition_type == "ei":
         from mfal.acquisition.expected_improvement import ExpectedImprovement
+
         return ExpectedImprovement()
+    elif acquisition_type == "ucb":
+        from mfal.acquisition.ucb import UpperConfidenceBound
+
+        return UpperConfidenceBound(beta=1.0)
     else:
         raise ValueError(f"Invalid acquisition type: {acquisition_type}")
 
@@ -173,7 +179,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--acquisition",
         default="random",
-        choices=["random", "ei"],
+        choices=["random", "ei", "ucb"],
         help="Acquisition function type",
     )
     parser.add_argument(
