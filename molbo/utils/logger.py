@@ -10,7 +10,7 @@ class WandBLogger:
         run_name: str = None,
         group_name: str = None,
         tags: list = None,
-        config: dict = None,
+        run_config: dict = None,
         mode: str = "online",
         silent: bool = True,
     ):
@@ -19,13 +19,19 @@ class WandBLogger:
             name=run_name,
             group=group_name,
             tags=tags,
-            config=config,
+            config=run_config,
             mode=mode,
             settings=wandb.Settings(silent=silent),
         )
 
     def log(self, data: dict):
         self.run.log(data)
+
+    def log_file(self, file_path):
+        self.run.save(str(file_path))
+
+    def log_config(self, config: dict):
+        self.run.config.update(config)
 
     def finish(self):
         self.run.finish()

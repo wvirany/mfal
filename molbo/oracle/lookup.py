@@ -8,7 +8,7 @@ class LookupOracle(Oracle):
     Data is stored as (X, y) pairs.
     """
 
-    def __init__(self, X_data, y_data, dim, noise_std=0.0):
+    def __init__(self, X_data, y_data, noise_std=0.0):
         """
         Args:
             X_data: (N, d) tensor of input features
@@ -17,10 +17,11 @@ class LookupOracle(Oracle):
             noise_std: (m) tensor with noise std for each output dim
         """
         super().__init__(noise_std)
-        self.dim = dim
 
         self.X_data = X_data
         self.y_data = y_data
+
+        self.dim = X_data.shape[-1]
 
     def _evaluate(self, X):
         """
@@ -35,11 +36,11 @@ class LookupOracle(Oracle):
         Shapes:
             X: (B, d)
             X_data: (N, d)
-            matches = (X_data.unsqueeze(0) == X.reshape(-1, 1, X_data.shape[-1])).all(dim=-1), dim is along d; (B,)
+            matches = (X_data.unsqueeze(0) == X.reshape(-1, 1, self.dim)).all(dim=-1), dim is along d; (B,)
             indices = matches.int().argmax(dim=1), dim is along N; (B,)
             y_data[indices]
         """
-        matches = (self.X_data.unsqueeze(0) == X.reshape(-1, 1, self.X_data.shape[-1])).all(dim=-1)
+        matches = (self.X_data.unsqueeze(0) == X.reshape(-1, 1, self.dim)).all(dim=-1)
         indices = matches.int().argmax(dim=-1)
 
         # Check if any points were not found

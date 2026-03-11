@@ -1,9 +1,10 @@
 docs/
 notebooks/
 .ruff_cache
+*-dev.*
 
 # Hydra
-outputs/
+output/
 
 # WandB
 wandb/

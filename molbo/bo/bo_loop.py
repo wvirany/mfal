@@ -78,7 +78,7 @@ class BOLoop:
             self.history["X_observed"] = torch.cat((self.history["X_observed"], new_X))
             self.history["y_observed"] = torch.cat((self.history["y_observed"], new_y))
             self.history["iteration"].append(i)
-            self.history["acq_vals"].append(acq_val)
+            self.history["acq_vals"].append(acq_val.item())
             self.history["model_loss"].append(self.model.loss().item())
 
             if self.metrics is not None:

@@ -10,7 +10,16 @@ sns.set_style("whitegrid")
 sns.set_palette("muted")
 
 
-def plot_1d_iteration(model, X_grid, train_X, train_y, new_X, new_y, oracle, acq_func, axes=None):
+def plot_curves(results_list: list[BOMetrics]):
+    """
+    TODO: Plot metric curves
+    """
+    pass
+
+
+def plot_1d_iteration(
+    model, X_grid, train_X, train_y, oracle, acq_func=None, new_X=None, new_y=None, axes=None
+):
     """
     Plot a single BO iteration in 1D.
 
@@ -117,13 +126,15 @@ def plot_1d_interactive(bo_loop: BOLoop):
 
         # Fit model
         model_class = type(bo_loop.model)
-        model = model_class(train_X, train_y)
+        model = model_class()
+        model.initialize(train_X, train_y)
         model.fit()
         models_list.append(model)
 
         # Get acquisition values
         acq_func_class = type(bo_loop.acq_func)
-        acq_func = acq_func_class(model)
+        acq_func = acq_func_class()
+        acq_func.update(model)
         acq_funcs_list.append(acq_func)
 
         train_X_list.append(train_X)
@@ -140,7 +151,7 @@ def plot_1d_interactive(bo_loop: BOLoop):
         new_y = new_y_list[iteration]
 
         # Plot
-        plot_1d_iteration(model, X_grid, train_X, train_y, new_X, new_y, oracle, acq_func)
+        plot_1d_iteration(model, X_grid, train_X, train_y, oracle, acq_func, new_X, new_y)
 
     # Create interactive widget
     slider = IntSlider(min=0, max=n_iters, step=1, value=0, description="Iteration:")
@@ -166,5 +177,51 @@ def plot_1d_interactive(bo_loop: BOLoop):
     display(VBox([controls, w.children[-1]]))
 
 
-def plot_curves(results_list: list[BOMetrics]):
-    pass
+def plot_discrete_iteration(
+    model, X_data, y_data, train_X, train_y, new_X, new_y, acq_func, axes=None
+):
+
+    sorted_indices = y_data.squeeze().argsort()
+    X_sorted = X_data[sorted_indices]
+    y_sorted = y_data.squeeze()[sorted_indices]
+    xs = torch.arange(len(y_sorted))
+
+    matches = (X_sorted.unsqueeze(1) == train_X.unsqueeze(0)).all(
+        dim=-1
+    )  # (N, n); find indices of X where a training data point matches
+    observed_mask = matches.any(dim=-1)  # (N,) which values have a "True" element
+    observed_xs = xs[observed_mask]
+    observed_ys = train_y.squeeze()[matches[observed_mask].int().argmax(dim=-1)]
+
+    if new_X is not None:
+        new_match = (X_sorted == new_X).all(dim=-1)
+        new_xs = xs[new_match]
+        new_ys = new_y.squeeze()
+
+    with torch.no_grad():
+        mean, std = model(X_sorted)
+        mean = mean.squeeze()
+        std = std.squeeze()
+        acq_vals = acq_func(X_sorted.unsqueeze(1)).squeeze()
+
+    if axes is None:
+        fig, axes = plt.subplots(2, 1, sharex=True, height_ratios=[4, 1], figsize=(6, 4))
+        show_legend = True
+    else:
+        show_legend = False
+
+    ax = axes[0]
+    ax.plot(xs, y_sorted, c="k", ls="--", label="Objective")
+    ax.errorbar(xs, mean, yerr=std, fmt="none", color="blue", alpha=0.3, label="Posterior std")
+    ax.scatter(observed_xs, observed_ys, color="k", s=20, zorder=3, label="Observed")
+    if new_X is not None:
+        ax.scatter(new_xs, new_ys, color="red", s=20, zorder=4, label="Pending observation")
+
+    ax = axes[1]
+    ax.bar(xs, acq_vals.detach(), color="limegreen", label="Acquisition")
+    if new_X is not None:
+        ax.bar(new_xs, acq_vals[new_match].detach(), color="red")
+
+    if show_legend:
+        fig.legend(bbox_to_anchor=(1.25, 0.65))
+        plt.show()
