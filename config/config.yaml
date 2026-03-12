@@ -1,0 +1,9 @@
+defaults:
+  - model: gp
+  - acquisition: ei
+  - oracle: gaussian_mixture_1d
+  - _self_
+
+bo:
+  n_init: 3
+  n_iters: 15

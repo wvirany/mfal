@@ -1,0 +1,5 @@
+_target_: molbo.acquisition.UCBAcquisition
+
+beta: 1.0
+sample: false
+sample_batch_size: 1

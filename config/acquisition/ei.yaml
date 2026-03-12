@@ -1,0 +1,4 @@
+_target_: molbo.acquisition.EIAcquisition
+
+sample: false
+sample_batch_size: 1

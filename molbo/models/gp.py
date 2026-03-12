@@ -1,7 +1,6 @@
 # Suppress warnings - these are safe to ignore for molecular fingerprints
 import warnings
 
-import gin
 import gpytorch
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -15,7 +14,6 @@ from molbo.models.base import SurrogateModel
 warnings.filterwarnings("ignore")
 
 
-@gin.configurable()
 class GPModel(SurrogateModel):
     """A wrapper for SingleTaskGP that implements the SurrogateModel interface"""
 

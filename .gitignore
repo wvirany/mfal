@@ -4,7 +4,8 @@ notebooks/
 *-dev.*
 
 # Hydra
-output/
+outputs/
+multirun/
 
 # WandB
 wandb/

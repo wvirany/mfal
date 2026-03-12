@@ -17,7 +17,6 @@ dependencies = [
     "botorch",
     "tqdm",
     "wandb",
-    "gin-config"
 ]
 
 [project.optional-dependencies]
