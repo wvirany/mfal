@@ -58,7 +58,10 @@ class GPModel(SurrogateModel):
             self.noise_module.initialize_from_data(y_transformed, self.model)
 
     def fit(self):
-        fit_gpytorch_mll(self.mll)
+        # Only fit if there are trainable parameters
+        trainable = [p for p in self.model.parameters() if p.requires_grad]
+        if trainable:
+            fit_gpytorch_mll(self.mll)
 
     def update(self, new_X, new_y):
         self.train_X = torch.cat([self.train_X, new_X])
