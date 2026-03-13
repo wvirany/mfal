@@ -3,7 +3,17 @@ A collection of factory functions to generate AnalyticOracle objects for differe
 """
 
 import torch
-from botorch.test_functions import Ackley, Branin, Hartmann, Rosenbrock
+from botorch.test_functions import (
+    Ackley,
+    Branin,
+    EggHolder,
+    Hartmann,
+    Michalewicz,
+    Rosenbrock,
+    Shekel,
+    SixHumpCamel,
+    StyblinskiTang,
+)
 
 from molbo.oracle import AnalyticOracle
 
@@ -58,6 +68,39 @@ def branin(noise_std=0.0):
     )
 
 
+def eggholder(noise_std=0.0):
+    """Eggholder function (2D). Negated for maximization."""
+    fn = EggHolder(megate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=2,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def goldstein_price(noise_std=0.0):
+    """Goldstein-Price function (2D). Negated for maximization."""
+    bounds = torch.tensor([[-2.0, -2.0], [2.0, 2.0]])
+
+    def f(X):
+        x1, x2 = X[..., 0], X[..., 1]
+        a = 1 + (x1 + x2 + 1) ** 2 * (19 - 14 * x1 + 3 * x1**2 - 14 * x2 + 6 * x1 * x2 + 3 * x2**2)
+        b = 30 + (2 * x1 - 3 * x2) ** 2 * (
+            18 - 32 * x1 + 12 * x1**2 + 48 * x2 - 36 * x1 * x2 + 27 * x2**2
+        )
+        return -(a * b)  # negate for maximization
+
+    return AnalyticOracle(
+        f=f,
+        bounds=bounds,
+        dim=2,
+        noise_std=noise_std,
+        optimal_value=-3.0,
+    )
+
+
 def hartmann(dim=6, noise_std=0.0):
     """Hartmann function (3 or 6D). Negated for maximization."""
     fn = Hartmann(dim=dim, negate=True)
@@ -70,9 +113,57 @@ def hartmann(dim=6, noise_std=0.0):
     )
 
 
+def michalewicz(dim=10, noise_std=0.0):
+    """Michalewicz function (arbitrary dim). Negated for maximization."""
+    fn = Michalewicz(dim=dim, negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=dim,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
 def rosenbrock(dim=10, noise_std=0.0):
     """Rosenbrock function (arbitrary dim). Negated for maximization."""
     fn = Rosenbrock(dim=dim, negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=dim,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def shekel(noise_std=0.0):
+    """Shekel function (4D). Negated for maximization."""
+    fn = Shekel(negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=4,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def six_hump_camel(noise_std=0.0):
+    """Six-hump camel function (2D). Negated for maximization."""
+    fn = SixHumpCamel(megate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=2,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def styblinski_tang(dim=10, noise_std=0.0):
+    """Styblinski-Tang function (arbitrary dim). Negated for maximization."""
+    fn = StyblinskiTang(dim=dim, negate=True)
     return AnalyticOracle(
         f=lambda X: fn(X),
         bounds=fn.bounds,

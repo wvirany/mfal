@@ -1,3 +1,2 @@
 _target_: molbo.oracle.test_functions.gaussian_mixture_1d
-
 noise_std: 0.0

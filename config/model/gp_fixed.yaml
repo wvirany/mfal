@@ -1,5 +1,0 @@
-_target_: molbo.models.GPModel
-covar_module:
-  _target_: molbo.models.modules.FixedRBFKernel
-noise_module:
-  _target_: molbo.models.modules.FixedNoise

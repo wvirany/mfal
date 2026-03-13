@@ -1,0 +1,3 @@
+_target_: molbo.oracle.test_functions.michalewicz
+dim: 10
+noise_std: 0.0

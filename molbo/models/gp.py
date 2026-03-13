@@ -49,13 +49,13 @@ class GPModel(SurrogateModel):
             y_transformed, _ = self.model.outcome_transform(self.train_y)
 
         if isinstance(self.mean_module, FixedMean):
-            self.mean_module.initialize_from_data(y_transformed)
+            self.mean_module.initialize(y_transformed)
 
         if isinstance(self.covar_module, FixedRBFKernel):
-            self.covar_module.initialize_from_data(X_transformed)
+            self.covar_module.initialize(X_transformed)
 
         if isinstance(self.noise_module, FixedNoise):
-            self.noise_module.initialize_from_data(y_transformed, self.model)
+            self.noise_module.initialize(y_transformed, self.model)
 
     def fit(self):
         # Only fit if there are trainable parameters
