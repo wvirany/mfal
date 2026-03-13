@@ -10,7 +10,7 @@ from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from molbo.models import SurrogateModel
-from molbo.models.modules import DataDependentMean
+from molbo.models.modules import FixedMean, FixedNoise, FixedRBFKernel
 
 warnings.filterwarnings("ignore")
 
@@ -18,9 +18,10 @@ warnings.filterwarnings("ignore")
 class GPModel(SurrogateModel):
     """A wrapper for SingleTaskGP that implements the SurrogateModel interface"""
 
-    def __init__(self, mean_module=None, covar_module=None, state_dict=None):
+    def __init__(self, mean_module=None, covar_module=None, noise_module=None):
         self.mean_module = mean_module
         self.covar_module = covar_module
+        self.noise_module = noise_module
 
     def initialize(self, train_X, train_y, state_dict=None):
 
@@ -35,14 +36,26 @@ class GPModel(SurrogateModel):
             input_transform=Normalize(d=train_X.shape[-1]),
         )
 
-        # Set constant mean value
-        if isinstance(self.mean_module, DataDependentMean):
-            self.mean_module.initialize_from_data(train_y)
+        self._init_modules()
 
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
 
         if state_dict is not None:
             self.model.load_state_dict(state_dict)
+
+    def _init_modules(self):
+        with torch.no_grad():
+            X_transformed = self.model.input_transform(self.train_X)
+            y_transformed, _ = self.model.outcome_transform(self.train_y)
+
+        if isinstance(self.mean_module, FixedMean):
+            self.mean_module.initialize_from_data(y_transformed)
+
+        if isinstance(self.covar_module, FixedRBFKernel):
+            self.covar_module.initialize_from_data(X_transformed)
+
+        if isinstance(self.noise_module, FixedNoise):
+            self.noise_module.initialize_from_data(y_transformed, self.model)
 
     def fit(self):
         fit_gpytorch_mll(self.mll)

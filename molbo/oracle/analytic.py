@@ -19,7 +19,10 @@ class AnalyticOracle(Oracle):
         self._optimal_value = optimal_value
 
     def _evaluate(self, X):
-        return self.f(X)
+        y = self.f(X)
+        if y.dim() == 1:
+            y = y.unsqueeze(-1)  # Explicit output dim
+        return y
 
     @property
     def optimal_value(self):

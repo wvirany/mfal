@@ -3,6 +3,7 @@ A collection of factory functions to generate AnalyticOracle objects for differe
 """
 
 import torch
+from botorch.test_functions import Ackley, Branin, Hartmann, Rosenbrock
 
 from molbo.oracle import AnalyticOracle
 
@@ -30,4 +31,52 @@ def gaussian_mixture_1d(noise_std=0.0):
         dim=1,
         noise_std=noise_std,
         optimal_value=1.791,
+    )
+
+
+def ackley(dim=5, noise_std=0.0):
+    """Ackley function (arbitrary dim). Negated for maximization."""
+    fn = Ackley(dim=dim, negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=dim,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def branin(noise_std=0.0):
+    """Branin function (2D). Negated for maximization."""
+    fn = Branin(negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=2,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def hartmann(dim=6, noise_std=0.0):
+    """Hartmann function (3 or 6D). Negated for maximization."""
+    fn = Hartmann(dim=dim, negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=dim,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
+    )
+
+
+def rosenbrock(dim=10, noise_std=0.0):
+    """Rosenbrock function (arbitrary dim). Negated for maximization."""
+    fn = Rosenbrock(dim=dim, negate=True)
+    return AnalyticOracle(
+        f=lambda X: fn(X),
+        bounds=fn.bounds,
+        dim=dim,
+        noise_std=noise_std,
+        optimal_value=fn.optimal_value,
     )
