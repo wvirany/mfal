@@ -1,0 +1,10 @@
+# @package _global_
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      mean_module: null,obs_mean,obs_max,obs_min
+      model: gp,gp_fixed
+      acquisition: ei,ucb,ts
+      oracle: ackley,branin,hartmann,rosenbrock
+      seed: 0,1,2,3,4

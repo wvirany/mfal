@@ -1,0 +1,3 @@
+_target_: molbo.oracle.test_functions.hartmann
+dim: 6
+noise_std: 0.0

@@ -22,7 +22,7 @@ class BOMetrics:
 
         metrics_dict = {
             "iteration": iteration,
-            "acq_val": self.history["acq_vals"][-1].item(),
+            "acq_val": self.history["acq_vals"][-1],
             "time_per_iter": self.history["time_per_iter"][-1],
             "model_loss": self.history["model_loss"][-1],
             "best_observed": self._compute_best_observed(y)[-1].item(),

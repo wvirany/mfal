@@ -1,1 +1,3 @@
 _target_: molbo.models.GPModel
+covar_module: null
+noise_module: null

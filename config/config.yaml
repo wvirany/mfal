@@ -4,6 +4,14 @@ defaults:
   - oracle: gaussian_mixture_1d
   - _self_
 
+mean_module: null
+
 bo:
   n_init: 3
-  n_iters: 15
+  n_iters: 25
+
+seed: 0
+
+wandb:
+  project: molbo-mean-functions
+  mode: online

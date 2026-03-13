@@ -1,0 +1,3 @@
+_target_: molbo.oracle.test_functions.ackley
+dim: 5
+noise_std: 0.0
