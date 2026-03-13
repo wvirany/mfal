@@ -9,7 +9,8 @@ from botorch.models.transforms.input import Normalize
 from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from molbo.models.base import SurrogateModel
+from molbo.models import SurrogateModel
+from molbo.models.modules import DataDependentMean
 
 warnings.filterwarnings("ignore")
 
@@ -17,16 +18,27 @@ warnings.filterwarnings("ignore")
 class GPModel(SurrogateModel):
     """A wrapper for SingleTaskGP that implements the SurrogateModel interface"""
 
-    def __init__(self, state_dict=None):
-        self.train_X = torch.tensor([])
-        self.train_y = torch.tensor([])
+    def __init__(self, mean_module=None, covar_module=None, state_dict=None):
+        self.mean_module = mean_module
+        self.covar_module = covar_module
 
     def initialize(self, train_X, train_y, state_dict=None):
 
         self.train_X = train_X
         self.train_y = train_y
 
-        self.model = SingleTaskGP(train_X, train_y, input_transform=Normalize(d=train_X.shape[-1]))
+        self.model = SingleTaskGP(
+            train_X,
+            train_y,
+            mean_module=self.mean_module,
+            covar_module=self.covar_module,
+            input_transform=Normalize(d=train_X.shape[-1]),
+        )
+
+        # Set constant mean value
+        if isinstance(self.mean_module, DataDependentMean):
+            self.mean_module.initialize_from_data(train_y)
+
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
 
         if state_dict is not None:
