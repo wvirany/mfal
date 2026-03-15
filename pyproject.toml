@@ -17,6 +17,7 @@ dependencies = [
     "botorch",
     "tqdm",
     "wandb",
+    "hydra-core"
 ]
 
 [project.optional-dependencies]
