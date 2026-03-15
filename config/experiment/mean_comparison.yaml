@@ -1,4 +1,7 @@
 # @package _global_
+wandb:
+  mode: online
+
 hydra:
   mode: MULTIRUN
   sweeper:
