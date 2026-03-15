@@ -6,12 +6,10 @@ defaults:
 
 bo:
   n_init: 5
-  n_iters: 50
+  n_iters: 15
 
 seed: 0
 
 wandb:
   project: molbo
   mode: disabled
-  tags:
-    - test
