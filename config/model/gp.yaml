@@ -1,6 +1,6 @@
 defaults:
-  - mean_module: mll
-  - covar_module: mll
-  - noise_module: mll
+  - mean_module: null
+  - covar_module: null
+  - noise_module: null
 
 _target_: molbo.models.GPModel

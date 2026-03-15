@@ -1,8 +1,0 @@
-# @package _global_
-hydra:
-  mode: MULTIRUN
-  sweeper:
-    params:
-      model: gp
-      model/mean_module: mll,obs_mean,obs_max,obs_min
-      oracle: glob(synthetic/*)

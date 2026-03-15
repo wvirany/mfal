@@ -125,8 +125,9 @@ def plot_1d_interactive(bo_loop: BOLoop):
             new_y = y_observed[i : i + 1] if i < n_iters else None
 
         # Fit model
-        model_class = type(bo_loop.model)
-        model = model_class()
+        import copy
+
+        model = copy.deepcopy(bo_loop.model)
         model.initialize(train_X, train_y)
         model.fit()
         models_list.append(model)
