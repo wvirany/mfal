@@ -16,40 +16,42 @@ def main(cfg: DictConfig):
     # Instantiate components
     oracle = instantiate(cfg.oracle)
     acq_func = instantiate(cfg.acquisition)
-    mean_module = instantiate(cfg.mean_module) if cfg.mean_module else None
-    model = instantiate(cfg.model, mean_module=mean_module)
+    # mean_module = instantiate(cfg.mean_module) if cfg.mean_module else None
+    model = instantiate(cfg.model)
 
-    # WandB setup
-    choices = HydraConfig.get().runtime.choices
-    mean_name = choices.get("mean_module", "mll")
-    group = f"{choices['oracle']}_{mean_name}_{choices['acquisition']}_{choices['model']}"
-    run_name = f"{group}_seed{cfg.seed}"
+    # # WandB setup
+    # choices = HydraConfig.get().runtime.choices
+    # mean_name = choices.get("mean_module", "mll")
+    # group = f"{choices['oracle']}_{mean_name}_{choices['acquisition']}_{choices['model']}"
+    # run_name = f"{group}_seed{cfg.seed}"
 
-    tags = [
-        choices["oracle"],
-        choices["model"],
-        mean_name,
-        choices["acquisition"],
-    ]
+    # tags = [
+    #     choices["oracle"],
+    #     choices["model"],
+    #     mean_name,
+    #     choices["acquisition"],
+    # ]
 
-    logger = WandBLogger(
-        project_name=cfg.wandb.project,
-        run_name=run_name,
-        group_name=group,
-        tags=tags,
-        mode=cfg.wandb.mode,
-        run_config=dict(cfg),
-    )
+    # logger = WandBLogger(
+    #     project_name=cfg.wandb.project,
+    #     run_name=run_name,
+    #     group_name=group,
+    #     tags=tags,
+    #     mode=cfg.wandb.mode,
+    #     run_config=dict(cfg),
+    # )
 
     # Init data
     train_X, train_y = sample_init(oracle, n_init=cfg.bo.n_init)
 
     # Run
-    metrics = BOMetrics(f_max=oracle.optimal_value, logger=logger)
+    metrics = BOMetrics(f_max=oracle.optimal_value)
     bo = BOLoop(train_X, train_y, model, acq_func, oracle, metrics=metrics)
-    bo.run(n_iters=cfg.bo.n_iters)
+    history = bo.run(n_iters=cfg.bo.n_iters)
 
-    logger.finish()
+    # logger.finish()
+
+    print(history["y_observed"].max())
 
 
 if __name__ == "__main__":
