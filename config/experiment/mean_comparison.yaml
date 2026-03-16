@@ -10,4 +10,4 @@ hydra:
       model: gp
       model/mean_module: obs_mean,obs_max,obs_min
       oracle: synthetic/ackley,synthetic/branin,synthetic/hartmann,synthetic/rosenbrock,synthetic/goldstein_price,synthetic/shekel,synthetic/michalewicz,synthetic/styblinski_tang
-      seed: 0,1,2,3,4
+      seed: range(0,50)
