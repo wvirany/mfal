@@ -45,7 +45,7 @@ def main(cfg: DictConfig):
     train_X, train_y = sample_init(oracle, n_init=cfg.bo.n_init)
 
     # Run
-    metrics = BOMetrics(f_max=oracle.optimal_value)
+    metrics = BOMetrics(f_max=oracle.optimal_value, logger=logger)
     bo = BOLoop(train_X, train_y, model, acq_func, oracle, metrics=metrics)
     history = bo.run(n_iters=cfg.bo.n_iters)
 
