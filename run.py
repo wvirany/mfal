@@ -20,7 +20,7 @@ def main(cfg: DictConfig):
 
     # WandB setup
     choices = HydraConfig.get().runtime.choices
-    mean_name = choices.get("mean_module", "mll")
+    mean_name = choices.get("model/mean_module", "mll")
     group = f"{choices['oracle']}_{mean_name}_{choices['acquisition']}_{choices['model']}"
     run_name = f"{group}_seed{cfg.seed}"
 
