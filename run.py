@@ -18,9 +18,10 @@ def main(cfg: DictConfig):
     acq_func = instantiate(cfg.acquisition)
     model = instantiate(cfg.model)
 
-    # WandB setup
+    # Resolve WandB parameters
     choices = HydraConfig.get().runtime.choices
-    mean_name = choices.get("model/mean_module", "mll")
+    c = choices.get("model/mean_module")
+    mean_name = c if c is not None else "mll"
     group = f"{choices['oracle']}_{mean_name}_{choices['acquisition']}_{choices['model']}"
     run_name = f"{group}_seed{cfg.seed}"
 
