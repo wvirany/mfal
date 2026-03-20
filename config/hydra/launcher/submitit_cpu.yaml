@@ -1,14 +1,9 @@
-defaults:
-  - submitit_slurm
-
-hydra:
-  launcher:
-    _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
-    timeout_min: 60
-    cpus_per_task: 4
-    mem_gb: 8
-    account: def-mkoz_cpu
-    array_parallelism: 50
-    setup:
-      - module load python/3.11 rdkit/2023.09.5 cuda/12.6
-      - source /scratch/wvirany/molbo/venv/bin/activate
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+timeout_min: 60
+cpus_per_task: 4
+mem_gb: 8
+account: def-mkoz_cpu
+array_parallelism: 50
+setup:
+  - module load python/3.11 rdkit/2023.09.5 cuda/12.6
+  - source /scratch/wvirany/molbo/venv/bin/activate
