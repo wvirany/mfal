@@ -4,7 +4,7 @@ notebooks/
 *-dev.*
 
 # Large results files
-results/*.pkl
+results/
 
 # Hydra
 outputs/

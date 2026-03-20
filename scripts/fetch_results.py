@@ -11,6 +11,7 @@ if __name__ == "__main__":
 
     results = WandBResults(args.project, experiment=args.experiment)
     results.fetch_runs()
+
     results.fetch_history()
 
     results_path = Path(f"results/{args.experiment}.pkl")

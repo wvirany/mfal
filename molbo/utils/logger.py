@@ -84,6 +84,7 @@ class WandBResults:
             filters = {"tags": {"$in": [self.experiment]}}
 
         self.runs = list(self.api.runs(self.project, filters=filters))
+        print(f"Found {len(self.runs)} runs")
 
         rows = []
         for run in self.runs:
