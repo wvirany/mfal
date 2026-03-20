@@ -1,9 +1,8 @@
 defaults:
-  - override hydra/launcher: submitit_slurm
+  - submitit_slurm
 
 hydra:
   launcher:
-    _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
     timeout_min: 60
     cpus_per_task: 4
     mem_gb: 8
