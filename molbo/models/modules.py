@@ -1,7 +1,7 @@
 """
 Modules for specifying fixed GP parameters.
 
-These don't get updated when fit() is called by BOLoop.
+These don't get updated when fit() is called by BOLoop, but are updated by GPModel._init_modules()
 """
 
 import gpytorch
@@ -10,25 +10,22 @@ import torch
 torch.set_default_dtype(torch.float64)
 
 
-class FixedMean(gpytorch.means.ConstantMean):
-
-    def __init__(self, constant=None):
+class FixedObservationMean(gpytorch.means.ConstantMean):
+    def __init__(self):
         super().__init__()
-        self._constant = constant
 
     def initialize_params(self, train_y):
-        value = torch.tensor(self._constant) if self._constant is not None else train_y.mean()
-        self.constant = value
+        self.constant = train_y.mean()
         self.constant.requires_grad_(False)
 
 
-class FixedObservationMax(FixedMean):
+class FixedObservationMax(FixedObservationMean):
     def initialize_params(self, train_y):
         self.constant = train_y.max()
         self.constant.requires_grad_(False)
 
 
-class FixedObservationMin(FixedMean):
+class FixedObservationMin(FixedObservationMean):
     def initialize_params(self, train_y):
         self.constant = train_y.min()
         self.constant.requires_grad_(False)

@@ -10,7 +10,7 @@ from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from molbo.models import SurrogateModel
-from molbo.models.modules import FixedMean, FixedNoise, FixedRBFKernel
+from molbo.models.modules import FixedNoise, FixedObservationMean, FixedRBFKernel
 
 warnings.filterwarnings("ignore")
 
@@ -44,11 +44,14 @@ class GPModel(SurrogateModel):
             self.model.load_state_dict(state_dict)
 
     def _init_modules(self):
-        with torch.no_grad():
+        # Note this also updates transform parameters
+        X_transformed, y_transformed = self.train_X, self.train_y
+        if self._input_transform is not None:
             X_transformed = self.model.input_transform(self.train_X)
+        if self._outcome_transform is not None:
             y_transformed, _ = self.model.outcome_transform(self.train_y)
 
-        if isinstance(self.mean_module, FixedMean):
+        if isinstance(self.mean_module, FixedObservationMean):
             self.mean_module.initialize_params(y_transformed)
 
         if isinstance(self.covar_module, FixedRBFKernel):
@@ -79,6 +82,16 @@ class GPModel(SurrogateModel):
         with torch.no_grad():
             output = self.model(self.train_X)
             return self.mll(output, self.train_y.squeeze())
+
+    @property
+    def _input_transform(self):
+        """Return SingleTaskGP input_transform if it exists, else None"""
+        return getattr(self.model, "input_transform", None)
+
+    @property
+    def _outcome_transform(self):
+        """Return SingleTaskGP outcome_transform if it exists, else None"""
+        return getattr(self.model, "outcome_transform", None)
 
 
 class TanimotoGP(SingleTaskGP):
