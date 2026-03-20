@@ -12,5 +12,5 @@ module load python/3.11 rdkit/2023.09.5 cuda/12.6
 
 source venv/bin/activate
 
-python run.py -m +experiment=mean_comparison
-python run.py -m +experiment=mean_comparison_baseline
+python run.py -m +experiment=mean_comparison/sweep.yaml
+python run.py -m +experiment=mean_comparison/baseline.yaml

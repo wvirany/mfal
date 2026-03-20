@@ -1,6 +1,10 @@
 # @package _global_
 wandb:
   mode: online
+  experiment: mean_comparison
+
+bo:
+  n_iters: 200
 
 hydra:
   mode: MULTIRUN

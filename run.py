@@ -18,28 +18,7 @@ def main(cfg: DictConfig):
     acq_func = instantiate(cfg.acquisition)
     model = instantiate(cfg.model)
 
-    # Resolve WandB parameters
-    choices = HydraConfig.get().runtime.choices
-    c = choices.get("model/mean_module")
-    mean_name = c if c is not None else "mll"
-    group = f"{choices['oracle']}_{mean_name}_{choices['acquisition']}_{choices['model']}"
-    run_name = f"{group}_seed{cfg.seed}"
-
-    tags = [
-        choices["oracle"],
-        choices["model"],
-        mean_name,
-        choices["acquisition"],
-    ]
-
-    logger = WandBLogger(
-        project_name=cfg.wandb.project,
-        run_name=run_name,
-        group_name=group,
-        tags=tags,
-        mode=cfg.wandb.mode,
-        run_config=dict(cfg),
-    )
+    logger = WandBLogger.init_from_cfg(cfg)
 
     # Init data
     train_X, train_y = sample_init(oracle, n_init=cfg.bo.n_init)

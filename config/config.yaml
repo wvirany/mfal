@@ -13,3 +13,4 @@ seed: 0
 wandb:
   project: molbo
   mode: disabled
+  experiment: test

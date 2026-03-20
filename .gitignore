@@ -3,6 +3,9 @@ notebooks/
 .ruff_cache
 *-dev.*
 
+# Large results files
+results/
+
 # Hydra
 outputs/
 multirun/
