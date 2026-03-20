@@ -70,19 +70,20 @@ class WandBLogger:
 
 
 class WandBResults:
-    def __init__(self, project: str):
+    def __init__(self, project: str, experiment: str = None):
         self.project = project
+        self.experiment = experiment
         self.api = wandb.Api()
         self.runs = None
         self.summary_df = None
         self.history_df = None
 
     def fetch_runs(self):
-        self.runs = list(
-            self.api.runs(
-                self.project, filters={"tags": {"$all": ["ei", "synthetic/ackley", "obs_mean"]}}
-            )
-        )
+        filters = {}
+        if self.experiment is not None:
+            filters = {"tags": {"$in": [self.experiment]}}
+
+        self.runs = list(self.api.runs(self.project, filters=filters))
 
         rows = []
         for run in self.runs:
