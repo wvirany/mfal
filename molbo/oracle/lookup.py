@@ -3,9 +3,9 @@ from molbo.oracle.base import Oracle
 
 class LookupOracle(Oracle):
     """
-    Oracle for fixed candidate pools with pre-computed values.
+    Oracle for fixed candidate pools with pre-computed values implemented as a lookup table.
 
-    Data is stored as (X, y) pairs.
+    Assumes a maximization problem.
     """
 
     def __init__(self, X_data, y_data, noise_std=0.0):
@@ -22,6 +22,7 @@ class LookupOracle(Oracle):
         self.y_data = y_data
 
         self.dim = X_data.shape[-1]
+        self._optimal_value = y_data.max().item()
 
     def _evaluate(self, X):
         """
