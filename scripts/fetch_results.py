@@ -14,5 +14,5 @@ if __name__ == "__main__":
 
     results.fetch_history()
 
-    results_path = Path(f"results/{args.experiment}.pkl")
+    results_path = Path(f"results/{args.experiment}/{args.experiment}.pkl")
     results.save(results_path)
