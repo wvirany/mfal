@@ -1,5 +1,6 @@
 import time
 
+import gpytorch
 import torch
 from botorch.optim import optimize_acqf, optimize_acqf_discrete
 
@@ -115,9 +116,10 @@ class BOLoop:
                 new_X = filtered_candidates[local_idx].unsqueeze(0)
                 acq_val = acq_values[local_idx]
             else:
-                new_X, acq_val = optimize_acqf_discrete(
-                    acq_function=self.acq_func.acq_func, q=1, choices=filtered_candidates
-                )
+                with torch.no_grad(), gpytorch.settings.fsat_pred_var():
+                    new_X, acq_val = optimize_acqf_discrete(
+                        acq_function=self.acq_func.acq_func, q=1, choices=filtered_candidates
+                    )
                 local_idx = (filtered_candidates == new_X).all(dim=-1).nonzero()[0].item()
 
             global_idx = self.candidates_mask.nonzero()[local_idx].item()
