@@ -12,5 +12,6 @@ def sample_init(oracle, n_init):
     elif isinstance(oracle, LookupOracle):
         indices = np.random.choice(len(oracle.X_data), n_init, replace=False)
         X = oracle.X_data[indices]
+        y = oracle.y_data[indices]
 
-    return X, oracle(X), indices
+    return X, y, indices
