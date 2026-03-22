@@ -12,9 +12,10 @@ from molbo.utils.logger import WandBLogger
 @hydra.main(config_path="config", config_name="config", version_base="1.3")
 def main(cfg: DictConfig):
     torch.manual_seed(cfg.seed)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Instantiate components
-    oracle = instantiate(cfg.oracle)
+    oracle = instantiate(cfg.oracle).to(device)
     acq_func = instantiate(cfg.acquisition)
     model = instantiate(cfg.model)
 

@@ -9,6 +9,7 @@ def sample_init(oracle, n_init):
         indices = None
         bounds = oracle.bounds
         X = torch.rand(n_init, oracle.dim) * (bounds[1] - bounds[0]) + bounds[0]
+        y = oracle(X)
     elif isinstance(oracle, LookupOracle):
         indices = np.random.choice(len(oracle.X_data), n_init, replace=False)
         X = oracle.X_data[indices]

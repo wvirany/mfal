@@ -92,8 +92,12 @@ class BOLoop:
 
             # Track BO loop history
             self.history["time_per_iter"].append(time.time() - iter_start)
-            self.history["X_observed"] = torch.cat((self.history["X_observed"], new_X))
-            self.history["y_observed"] = torch.cat((self.history["y_observed"], new_y))
+            self.history["X_observed"] = torch.cat(
+                (self.history["X_observed"], new_X.detach().cpu())
+            )
+            self.history["y_observed"] = torch.cat(
+                (self.history["y_observed"], new_y.detach().cpu())
+            )
             self.history["iteration"].append(i)
             self.history["acq_vals"].append(acq_val.item())
             self.history["model_loss"].append(self.model.loss().item())
@@ -109,19 +113,18 @@ class BOLoop:
         if self.candidates is not None:
             filtered_candidates = self.candidates[self.candidates_mask]
 
-            if self.sample:
-                acq_values = self.acq_func(filtered_candidates.unsqueeze(1)).squeeze()
-                probs = acq_values / acq_values.sum()
-                local_idx = torch.multinomial(probs, num_samples=1).item()
-                new_X = filtered_candidates[local_idx].unsqueeze(0)
-                acq_val = acq_values[local_idx]
-            else:
-                with torch.no_grad(), gpytorch.settings.fast_pred_var():
-                    # Fast caching for large test datasets
+            with torch.no_grad():
+                if self.sample:
+                    acq_values = self.acq_func(filtered_candidates.unsqueeze(1)).squeeze()
+                    probs = acq_values / acq_values.sum()
+                    local_idx = torch.multinomial(probs, num_samples=1).item()
+                    new_X = filtered_candidates[local_idx].unsqueeze(0)
+                    acq_val = acq_values[local_idx]
+                else:
                     new_X, acq_val = optimize_acqf_discrete(
                         acq_function=self.acq_func.acq_func, q=1, choices=filtered_candidates
                     )
-                local_idx = (filtered_candidates == new_X).all(dim=-1).nonzero()[0].item()
+                    local_idx = (filtered_candidates == new_X).all(dim=-1).nonzero()[0].item()
 
             global_idx = self.candidates_mask.nonzero()[local_idx].item()
             self.candidates_mask[global_idx] = False
