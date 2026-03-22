@@ -53,3 +53,9 @@ class LookupOracle(Oracle):
     @property
     def candidates(self):
         return self.X_data
+
+    @property
+    def optimal_value(self):
+        if self._optimal_value is None:
+            raise ValueError("Optimal value not set. Either set during init or compute manually.")
+        return self._optimal_value

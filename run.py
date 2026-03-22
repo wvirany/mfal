@@ -21,11 +21,22 @@ def main(cfg: DictConfig):
     logger = WandBLogger.init_from_cfg(cfg)
 
     # Init data
-    train_X, train_y = sample_init(oracle, n_init=cfg.bo.n_init)
+    train_X, train_y, observed_indices = sample_init(oracle, n_init=cfg.bo.n_init)
+
+    metrics = BOMetrics(f_max=oracle.optimal_value, logger=logger)
+    candidates = getattr(oracle, "candidates", None)
 
     # Run
-    metrics = BOMetrics(f_max=oracle.optimal_value, logger=logger)
-    bo = BOLoop(train_X, train_y, model, acq_func, oracle, metrics=metrics)
+    bo = BOLoop(
+        train_X,
+        train_y,
+        model,
+        acq_func,
+        oracle,
+        candidates=candidates,
+        observed_indices=observed_indices,
+        metrics=metrics,
+    )
     history = bo.run(n_iters=cfg.bo.n_iters)
 
     logger.finish()

@@ -1,3 +1,5 @@
+# Deprecated
+
 from typing import Set
 
 import numpy as np
