@@ -116,7 +116,8 @@ class BOLoop:
                 new_X = filtered_candidates[local_idx].unsqueeze(0)
                 acq_val = acq_values[local_idx]
             else:
-                with torch.no_grad(), gpytorch.settings.fsat_pred_var():
+                with torch.no_grad(), gpytorch.settings.fast_pred_var():
+                    # Fast caching for large test datasets
                     new_X, acq_val = optimize_acqf_discrete(
                         acq_function=self.acq_func.acq_func, q=1, choices=filtered_candidates
                     )
