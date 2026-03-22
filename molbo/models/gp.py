@@ -102,6 +102,9 @@ class TanimotoGP(SingleTaskGP):
         self.mean_module = gpytorch.means.ConstantMean()
         self.covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
 
+        # Send mean_module and covar_module params to same device as train_X - matches SingleTaskGP setup
+        self.to(train_X)
+
 
 class TanimotoGPModel(GPModel):
     """Wrapper for TanimotoGP model."""
