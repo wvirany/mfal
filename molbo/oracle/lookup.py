@@ -59,3 +59,8 @@ class LookupOracle(Oracle):
         if self._optimal_value is None:
             raise ValueError("Optimal value not set. Either set during init or compute manually.")
         return self._optimal_value
+
+    def to(self, device):
+        self.X_data = self.X_data.to(device)
+        self.y_data = self.y_data.to(device)
+        return self
