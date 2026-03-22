@@ -91,7 +91,9 @@ class WandBResults:
             row = {"run_id": run.id}
             for tag in run.tags:
                 row[tag] = True
-            summary = json.loads(run.summary._json_dict)
+            summary = run.summary._json_dict
+            if isinstance(summary, str):
+                summary = json.loads(summary)
             row.update({k: v for k, v in summary.items() if not k.startswith("_")})
             rows.append(row)
 
