@@ -15,6 +15,7 @@ data/
 
 **results.csv:**
 - `prot_smiles` - Use this for embeddings
+- `qed_score` - QED score computed w/ RDKit
 - `vina_score` - Docking score
 - `mmgbsa_score` - MMGBSA score
 - `mmgbsa_score_sem` - Standard error from 20 MD replicates

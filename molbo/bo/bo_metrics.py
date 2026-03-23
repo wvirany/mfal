@@ -2,10 +2,26 @@ import torch
 
 
 class BOMetrics:
-    """Metrics for BO loop"""
+    """
+    Metrics for BO loop
 
-    def __init__(self, f_max: float, logger=None):
+    Args:
+        f_max: Maximumum of oracle
+
+        top_k_threshold: Threshold to compute num samples above
+        n_top_k: Number of samples above top_k_threshold
+        --> (Used for computing retrieval rate in fixed datasets)
+
+        logger: WandBLogger instance
+    """
+
+    def __init__(
+        self, f_max: float, top_k_threshold: float = None, n_top_k: float = None, logger=None
+    ):
         self.f_max = f_max
+        self.top_k_threshold = top_k_threshold
+        self.n_top_k = n_top_k
+
         self.logger = logger
         self.history = None
 
@@ -74,3 +90,10 @@ class BOMetrics:
             else:
                 topk_means.append(y[:i].mean().item())
         return torch.tensor(topk_means)
+
+    def _compute_retrieval_rate(self, y):
+        """Compute proportion of samples found above given threshold"""
+        if self.top_k_threshold is None:
+            return None
+        found = (y >= self.top_k_threshold).cumsum(dim=0)
+        return found / self.n_top_k

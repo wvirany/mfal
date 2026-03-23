@@ -24,7 +24,13 @@ def main(cfg: DictConfig):
     # Init data
     train_X, train_y, observed_indices = sample_init(oracle, n_init=cfg.bo.n_init)
 
-    metrics = BOMetrics(f_max=oracle.optimal_value, logger=logger)
+    # Class for computing metrics; top_k_threshold and n_top_k used by LookupOracle
+    metrics = BOMetrics(
+        f_max=oracle.optimal_value,
+        logger=logger,
+        top_k_threshold=getattr(oracle, "top_k_threshold", None),
+        n_top_k=getattr(oracle, "n_top_k", None),
+    )
     candidates = getattr(oracle, "candidates", None)
 
     # Run

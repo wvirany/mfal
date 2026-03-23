@@ -1,3 +1,5 @@
+import torch
+
 from molbo.oracle.base import Oracle
 
 
@@ -5,16 +7,16 @@ class LookupOracle(Oracle):
     """
     Oracle for fixed candidate pools with pre-computed values implemented as a lookup table.
 
-    Assumes a maximization problem.
+    Assumes a maximization problem. Currently assumes output dim is 1.
     """
 
-    def __init__(self, X_data, y_data, noise_std=0.0):
+    def __init__(self, X_data, y_data, top_k=0.01, noise_std=0.0):
         """
         Args:
             X_data: (N, d) tensor of input features
-            y_data: (N, m) tensor of outputs
+            y_data: (N, 1) tensor of outputs
             dim: Number of input dimensions
-            noise_std: (m) tensor with noise std for each output dim
+            noise_std: (1) tensor with noise std for each output dim
         """
         super().__init__(noise_std)
 
@@ -23,6 +25,9 @@ class LookupOracle(Oracle):
 
         self.dim = X_data.shape[-1]
         self._optimal_value = y_data.max().item()
+
+        self.top_k_threshold = torch.quantile(y_data, 1 - top_k).item()
+        self.n_top_k = (y_data >= self.top_k_threshold).sum().item()
 
     def _evaluate(self, X):
         """
