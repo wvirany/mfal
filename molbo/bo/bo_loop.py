@@ -45,8 +45,8 @@ class BOLoop:
         self.sample_batch_size = sample_batch_size
 
         self.history = {
-            "X_init": train_X,
-            "y_init": train_y,
+            "X_init": train_X.cpu(),
+            "y_init": train_y.cpu(),
             "X_observed": torch.tensor([], dtype=torch.float64),
             "y_observed": torch.tensor([], dtype=torch.float64),
             "acq_vals": [],
