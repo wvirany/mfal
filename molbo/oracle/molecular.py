@@ -2,7 +2,7 @@ import torch
 
 from molbo.data import load_mcl1_data
 from molbo.oracle import LookupOracle
-from molbo.utils import smiles_to_morgan_fp
+from molbo.utils.helpers import smiles_to_morgan_fp
 
 
 def mcl1_qed(noise_std=0.0):
