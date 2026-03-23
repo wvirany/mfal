@@ -3,6 +3,7 @@ import time
 import gpytorch
 import torch
 from botorch.optim import optimize_acqf, optimize_acqf_discrete
+from tqdm import tqdm
 
 from molbo.acquisition import Acquisition
 from molbo.bo.bo_metrics import BOMetrics
@@ -74,7 +75,7 @@ class BOLoop:
 
     def run(self, n_iters):
 
-        for i in range(n_iters):
+        for i in tqdm(range(n_iters), desc="BO", unit="iter"):
             iter_start = time.time()
 
             # Update model and acquisition function
