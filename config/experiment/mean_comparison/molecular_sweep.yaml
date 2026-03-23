@@ -4,7 +4,7 @@ wandb:
   experiment: mean_comparison
 
 bo:
-  n_iters: 1000
+  n_iters: 500
   checkpoint: true
 
 hydra:
