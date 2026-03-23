@@ -7,6 +7,9 @@ defaults:
 bo:
   n_init: 5
   n_iters: 15
+  save_checkpoint: false
+  load_checkpoint: false
+  checkpoint_freq: 100
 
 seed: 0
 

@@ -5,6 +5,8 @@ wandb:
 
 bo:
   n_iters: 1000
+  save_checkpoint: true
+  load_checkpoint: true
 
 hydra:
   mode: MULTIRUN

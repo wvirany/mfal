@@ -114,7 +114,7 @@ class BOLoop:
         if self.candidates is not None:
             filtered_candidates = self.candidates[self.candidates_mask]
 
-            with torch.no_grad():
+            with torch.no_grad(), gpytorch.settings.fast_pred_var():
                 if self.sample:
                     acq_values = self.acq_func(filtered_candidates.unsqueeze(1)).squeeze()
                     probs = acq_values / acq_values.sum()
