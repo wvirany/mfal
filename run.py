@@ -47,6 +47,7 @@ def main(cfg: DictConfig):
         observed_indices=observed_indices,
         metrics=metrics,
         checkpoint=checkpoint,
+        device=device,
     )
     history = bo.run(n_iters=cfg.bo.n_iters)
 

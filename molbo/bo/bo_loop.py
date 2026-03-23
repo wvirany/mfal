@@ -37,6 +37,7 @@ class BOLoop:
         sample_batch_size: int = 1,
         metrics: BOMetrics = None,
         checkpoint=None,
+        device="cpu",
     ):
         self.model = model
         self.acq_func = acq_func
@@ -52,8 +53,8 @@ class BOLoop:
         if loaded_history is not None:
             self.history = loaded_history
             self.start_iteration = len(self.history["iteration"])
-            train_X = torch.cat([self.history["X_init"], self.history["X_observed"]])
-            train_y = torch.cat([self.history["y_init"], self.history["y_observed"]])
+            train_X = torch.cat([self.history["X_init"], self.history["X_observed"]]).to(device)
+            train_y = torch.cat([self.history["y_init"], self.history["y_observed"]]).to(device)
             observed_indices = self.history["observed_indices"]
         else:
             self.history = {
