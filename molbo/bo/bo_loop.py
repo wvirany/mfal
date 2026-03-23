@@ -142,7 +142,10 @@ class BOLoop:
                     acq_val = acq_values[local_idx]
                 else:
                     new_X, acq_val = optimize_acqf_discrete(
-                        acq_function=self.acq_func.acq_func, q=1, choices=filtered_candidates
+                        acq_function=self.acq_func.acq_func,
+                        q=1,
+                        choices=filtered_candidates,
+                        max_batch_size=256,
                     )
                     local_idx = (filtered_candidates == new_X).all(dim=-1).nonzero()[0].item()
 
