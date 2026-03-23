@@ -17,6 +17,6 @@ hydra:
       oracle: mcl1/qed,mcl1/vina,mcl1/mmgbsa
       seed: range(0,5)
   launcher:
-    timeout_min: 480
+    timeout_min: 120
     mem_gb: 32
     gres: gpu:h100:1
