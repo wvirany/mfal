@@ -6,10 +6,10 @@ from rdkit import Chem
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem.QED import qed
 
-from molbo.oracle import AnalyticOracle, LookupOracle
-
 
 def sample_init(oracle, n_init):
+    from molbo.oracle import AnalyticOracle, LookupOracle
+
     if isinstance(oracle, AnalyticOracle):
         indices = None
         bounds = oracle.bounds
