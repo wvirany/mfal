@@ -46,6 +46,9 @@ class BOMetrics:
             "cumulative_regret": self._compute_cumulative_regret(y)[-1].item(),
         }
 
+        if self.top_k_threshold is not None:
+            metrics_dict["retrieval_rate"] = self._compute_retrieval_rate(y)[-1].item()
+
         if self.logger is not None:
             self.logger.log(metrics_dict)
 
@@ -63,6 +66,7 @@ class BOMetrics:
             "cumulative_regret": self._compute_cumulative_regret(y),
             "best_observed": self._compute_best_observed(y),
             "topk_mean": self._compute_topk_mean(y, k=10),
+            "retrieval_rate": self._compute_retrieval_rate(y),
         }
 
     def compute_batch_metrics(self):
