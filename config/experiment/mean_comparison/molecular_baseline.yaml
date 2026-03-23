@@ -1,0 +1,16 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: mean_comparison
+
+bo:
+  n_iters: 1000
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      acquisition: ei,ucb,ts
+      model: tanimoto_gp
+      oracle: mcl1/qed,mcl1/vina,mcl1/mmgbsa
+      seed: range(0,5)
