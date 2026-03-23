@@ -17,3 +17,7 @@ hydra:
       model/mean_module: obs_mean,obs_max,obs_min
       oracle: mcl1/qed,mcl1/vina,mcl1/mmgbsa
       seed: range(0,5)
+  launcher:
+    timeout_min: 480
+    mem_gb: 32
+    gres: gpu:h100:1

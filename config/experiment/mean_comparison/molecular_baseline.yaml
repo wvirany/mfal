@@ -19,4 +19,4 @@ hydra:
   launcher:
     timeout_min: 480
     mem_gb: 32
-    gres: gpu:nvidia_h100_80gb_hbm3_1g.10gb:1
+    gres: gpu:h100:1
