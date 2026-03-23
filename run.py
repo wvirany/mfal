@@ -6,7 +6,7 @@ from omegaconf import DictConfig
 
 from molbo.bo import BOLoop, BOMetrics
 from molbo.utils import sample_init
-from molbo.utils.logger import WandBLogger
+from molbo.utils.logger import BOCheckpoint, WandBLogger
 
 
 @hydra.main(config_path="config", config_name="config", version_base="1.3")
@@ -33,6 +33,9 @@ def main(cfg: DictConfig):
     )
     candidates = getattr(oracle, "candidates", None)
 
+    # Create checkpoint class for saving / loading
+    checkpoint = BOCheckpoint(cfg) if cfg.bo.checkpoint else None
+
     # Run
     bo = BOLoop(
         train_X,
@@ -43,6 +46,7 @@ def main(cfg: DictConfig):
         candidates=candidates,
         observed_indices=observed_indices,
         metrics=metrics,
+        checkpoint=checkpoint,
     )
     history = bo.run(n_iters=cfg.bo.n_iters)
 

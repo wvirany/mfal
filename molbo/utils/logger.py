@@ -3,6 +3,7 @@ from pathlib import Path
 
 import hydra
 import pandas as pd
+import torch
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
 
@@ -34,13 +35,7 @@ class WandBLogger:
 
     @classmethod
     def init_from_cfg(cls, cfg: DictConfig):
-        choices = HydraConfig.get().runtime.choices
-
-        # Build tags
-        tags = [v for k, v in choices.items() if not k.startswith("hydra") and v is not None]
-
-        group = "_".join(tags)
-        run_name = f"{group}_seed{cfg.seed}"
+        run_name, group, tags = get_run_info(cfg)
 
         experiment = cfg.wandb.get("experiment", None)
         if experiment is not None:
@@ -123,3 +118,42 @@ class WandBResults:
     @staticmethod
     def load(path: str) -> dict:
         return pd.read_pickle(path)
+
+
+class BOCheckpoint:
+    def __init__(self, cfg):
+        run_name, _, _ = get_run_info(cfg)
+        self.run_name = run_name
+        self.experiment = cfg.wandb.get("experiment", None)
+        self.checkpoint_freq = cfg.bo.checkpoint_freq
+        self.path = Path("checkpoints") / self.experiment / self.run_name / "checkpoint.pt"
+
+    def save(self, history):
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(
+            {
+                "history": history,
+                "rng_state": torch.get_rng_state(),
+                "cuda_rng_state": torch.cuda.get_rng_state() if torch.cuda.is_available() else None,
+            },
+            self.path,
+        )
+
+    def load(self):
+        if not self.path.exists():
+            return None
+        data = torch.load(self.path)
+        torch.set_rng_state(data["rng_state"])
+        if data.get("cuda_rng_state", None) is not None:
+            torch.cuda.set_rng_state(data["cuda_rng_state"])
+        print(f"Resuming {self.run_name} from iteration {len(data['history']['iteration'])}")
+        return data["history"]
+
+
+def get_run_info(cfg):
+    choices = HydraConfig.get().runtime.choices
+    tags = [v for k, v in choices.items() if not k.startswith("hydra") and v is not None]
+    group = "_".join(tags)
+    run_name = f"{group}_seed{cfg.seed}"
+
+    return run_name, group, tags
