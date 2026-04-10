@@ -1,7 +1,7 @@
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 cpus_per_task: 4
-account: rrg-mkoz_gpu
+account: def-mkoz_gpu
 array_parallelism: 32
 setup:
   - module load python/3.11 rdkit/2023.09.5 cuda/12.6
