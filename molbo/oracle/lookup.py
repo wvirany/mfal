@@ -47,7 +47,7 @@ class LookupOracle(Oracle):
             indices: (B,)
             y_data[indices]: (B, m)
         """
-        indices = [self._hash_to_idx[hash(row.numpy().tobytes())] for row in X]
+        indices = [self._hash_to_idx[hash(row.cpu().numpy().tobytes())] for row in X]
         return self.y_data[indices]
 
     @property
