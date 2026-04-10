@@ -39,12 +39,15 @@ class Mcl1DockingMean(gpytorch.means.Mean):
     def __init__(self):
         super().__init__()
         self.oracle = mcl1_vina()
+        y = self.oracle.y_data
+        self.mu = y.mean()
+        self.sigma = y.std()
 
     def forward(self, x):
-        x_flat = x.reshape(-1, x.shape[-1]).cpu()
-        # Reshape to leading dimensions (i.e., drop 'd' dimension)
-        res = self.oracle(x_flat).to(x.device).reshape(x.shape[:-1])
-        return res
+        x_flat = x.reshape(-1, x.shape[-1])
+        scores = self.oracle(x_flat)
+        scores = (scores - self.mu) / self.sigma
+        return scores.to(x.device).reshape(x.shape[:-1])
 
 
 class FixedRBFKernel(gpytorch.kernels.RBFKernel):
