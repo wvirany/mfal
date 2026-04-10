@@ -41,9 +41,9 @@ class Mcl1DockingMean(gpytorch.means.Mean):
         self.oracle = mcl1_vina()
 
     def forward(self, x):
-        x_flat = x.reshape(-1, x.shape[-1])
+        x_flat = x.reshape(-1, x.shape[-1]).cpu()
         # Reshape to leading dimensions (i.e., drop 'd' dimension)
-        res = self.oracle(x_flat).reshape(x.shape[:-1])
+        res = self.oracle(x_flat).to(x.device).reshape(x.shape[:-1])
         return res
 
 
