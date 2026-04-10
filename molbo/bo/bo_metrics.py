@@ -42,10 +42,12 @@ class BOMetrics:
             "time_per_iter": self.history["time_per_iter"][-1],
             "model_loss": self.history["model_loss"][-1],
             "best_observed": self._compute_best_observed(y)[-1].item(),
+            "top10_mean": self._compute_topk_mean(y, k=10)[-1].item(),
             "simple_regret": self._compute_simple_regret(y)[-1].item(),
             "cumulative_regret": self._compute_cumulative_regret(y)[-1].item(),
         }
 
+        # Log retrieval rate if applicable
         if self.top_k_threshold is not None:
             metrics_dict["retrieval_rate"] = self._compute_retrieval_rate(y)[-1].item()
 
@@ -65,7 +67,7 @@ class BOMetrics:
             "simple_regret": self._compute_simple_regret(y),
             "cumulative_regret": self._compute_cumulative_regret(y),
             "best_observed": self._compute_best_observed(y),
-            "topk_mean": self._compute_topk_mean(y, k=10),
+            "top10_mean": self._compute_topk_mean(y, k=10),
             "retrieval_rate": self._compute_retrieval_rate(y),
         }
 

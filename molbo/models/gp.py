@@ -95,15 +95,14 @@ class GPModel(SurrogateModel):
 
 
 class TanimotoGP(SingleTaskGP):
-    """GP with min-max (Tanimoto) kernel for molecular fingerprints."""
 
-    def __init__(self, train_X, train_y):
-        super().__init__(train_X, train_y)
-        self.mean_module = gpytorch.means.ConstantMean()
-        self.covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
-
-        # Send mean_module and covar_module params to same device as train_X - matches SingleTaskGP setup
-        self.to(train_X)
+    def __init__(self, train_X, train_y, mean_module=None):
+        super().__init__(
+            train_X,
+            train_y,
+            mean_module=mean_module,
+            covar_module=gpytorch.kernels.ScaleKernel(TanimotoKernel()),
+        )
 
 
 class TanimotoGPModel(GPModel):
@@ -114,7 +113,14 @@ class TanimotoGPModel(GPModel):
         self.train_X = train_X
         self.train_y = train_y
 
-        self.model = TanimotoGP(train_X, train_y)
+        self.model = TanimotoGP(
+            train_X,
+            train_y,
+            mean_module=self.mean_module,
+        )
+
+        self._init_modules()
+
         self.mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
 
         if state_dict is not None:

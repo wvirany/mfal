@@ -1,0 +1,22 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: mean_comparison
+
+bo:
+  n_iters: 500
+  checkpoint: true
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      acquisition: ei
+      model: tanimoto_gp
+      model/mean_module: mcl1_docking
+      oracle: mcl1/mmgbsa
+      seed: range(0,5)
+  launcher:
+    timeout_min: 120
+    mem_gb: 32
+    gres: gpu:h100:1

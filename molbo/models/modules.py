@@ -7,6 +7,8 @@ These don't get updated when fit() is called by BOLoop, but are updated by GPMod
 import gpytorch
 import torch
 
+from molbo.oracle import mcl1_vina
+
 torch.set_default_dtype(torch.float64)
 
 
@@ -29,6 +31,20 @@ class FixedObservationMin(FixedObservationMean):
     def initialize_params(self, train_y):
         self.constant = train_y.min()
         self.constant.requires_grad_(False)
+
+
+class Mcl1DockingMean(gpytorch.means.Mean):
+    """Docking scores for Mcl1 dataset used as prior mean for MM/GBSA"""
+
+    def __init__(self):
+        super().__init__()
+        self.oracle = mcl1_vina()
+
+    def forward(self, x):
+        x_flat = x.reshape(-1, x.shape[-1])
+        # Reshape to leading dimensions (i.e., drop 'd' dimension)
+        res = self.oracle(x_flat).reshape(x.shape[:-1])
+        return res
 
 
 class FixedRBFKernel(gpytorch.kernels.RBFKernel):

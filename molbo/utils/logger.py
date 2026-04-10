@@ -152,7 +152,11 @@ class BOCheckpoint:
 
 def get_run_info(cfg):
     choices = HydraConfig.get().runtime.choices
-    tags = [v for k, v in choices.items() if not k.startswith("hydra") and v is not None]
+    tags = [
+        v.replace("/", "_")
+        for k, v in choices.items()
+        if not k.startswith("hydra") and v is not None
+    ]
     group = "_".join(tags)
     run_name = f"{group}_seed{cfg.seed}"
 

@@ -29,6 +29,8 @@ class LookupOracle(Oracle):
         self.top_k_threshold = torch.quantile(y_data, 1 - top_k).item()
         self.n_top_k = (y_data >= self.top_k_threshold).sum().item()
 
+        self._hash_to_idx = {hash(row.numpy().tobytes()): i for i, row in enumerate(X_data)}
+
     def _evaluate(self, X):
         """
         Look up values for X in stored dataset.
@@ -42,17 +44,10 @@ class LookupOracle(Oracle):
         Shapes:
             X: (B, d)
             X_data: (N, d)
-            matches = (X_data.unsqueeze(0) == X.reshape(-1, 1, self.dim)).all(dim=-1), dim is along d; (B,)
-            indices = matches.int().argmax(dim=1), dim is along N; (B,)
-            y_data[indices]
+            indices: (B,)
+            y_data[indices]: (B, m)
         """
-        matches = (self.X_data.unsqueeze(0) == X.reshape(-1, 1, self.dim)).all(dim=-1)
-        indices = matches.int().argmax(dim=-1)
-
-        # Check if any points were not found
-        if not matches.any(dim=-1).all():
-            raise ValueError("Some points not found in dataset")
-
+        indices = [self._hash_to_idx[hash(row.numpy().tobytes())] for row in X]
         return self.y_data[indices]
 
     @property
