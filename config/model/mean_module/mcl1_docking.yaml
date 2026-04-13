@@ -1,1 +1,1 @@
-_target_: molbo.models.modules.Mcl1DockingMean
+_target_: molbo.model.modules.Mcl1DockingMean

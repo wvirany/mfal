@@ -1,1 +1,1 @@
-_target_: molbo.models.modules.FixedObservationMean
+_target_: molbo.model.modules.FixedObservationMean

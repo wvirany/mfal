@@ -1,1 +1,1 @@
-_target_: molbo.models.modules.FixedNoise
+_target_: molbo.model.modules.FixedNoise

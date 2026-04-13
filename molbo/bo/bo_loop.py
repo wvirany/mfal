@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from molbo.acquisition import Acquisition
 from molbo.bo.bo_metrics import BOMetrics
-from molbo.models import SurrogateModel
+from molbo.model import SurrogateModel
 from molbo.oracle import Oracle
 
 

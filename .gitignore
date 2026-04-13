@@ -4,8 +4,9 @@ checkpoints/
 .ruff_cache
 *-dev.*
 
-# Large results files
+# Large files
 results/
+data/
 
 # Hydra
 outputs/

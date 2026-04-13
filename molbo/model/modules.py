@@ -7,7 +7,8 @@ These don't get updated when fit() is called by BOLoop, but are updated by GPMod
 import gpytorch
 import torch
 
-from molbo.oracle import mcl1_vina
+from molbo.dataset import Mcl1Dataset
+from molbo.oracle import oracle_from_dataset
 
 torch.set_default_dtype(torch.float64)
 
@@ -38,7 +39,8 @@ class Mcl1DockingMean(gpytorch.means.Mean):
 
     def __init__(self):
         super().__init__()
-        self.oracle = mcl1_vina()
+        dataset = Mcl1Dataset()
+        self.oracle = oracle_from_dataset(dataset, column="vina", negate=True)
         y = self.oracle.y_data
         self.mu = y.mean()
         self.sigma = y.std()

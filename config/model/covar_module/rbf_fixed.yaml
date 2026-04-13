@@ -1,1 +1,1 @@
-_target_: molbo.models.modules.FixedRBFKernel
+_target_: molbo.model.modules.FixedRBFKernel

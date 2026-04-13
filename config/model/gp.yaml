@@ -3,4 +3,4 @@ defaults:
   - covar_module: null
   - noise_module: null
 
-_target_: molbo.models.GPModel
+_target_: molbo.model.GPModel

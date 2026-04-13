@@ -1,29 +1,26 @@
-import torch
+"""
+Named oracle constructors for known molecular datasets.
 
-from molbo.data import load_mcl1_data
-from molbo.oracle import LookupOracle
-from molbo.utils.helpers import smiles_to_morgan_fp
+These thin wrappers exist for Hydra config compatibility — Hydra requires a single
+callable _target_, so we can't express oracle_from_dataset() with a nested dataset
+object cleanly in YAML. These functions delegate to oracle_from_dataset() internally
+and are the config-facing API for known datasets.
+"""
 
-
-def mcl1_qed(noise_std=0.0):
-    df = load_mcl1_data()
-    smiles_list = df["prot_smiles"].to_list()
-    X = torch.vstack([smiles_to_morgan_fp(s) for s in smiles_list])
-    y = torch.tensor(df["qed_score"].values, dtype=torch.float64).unsqueeze(-1)
-    return LookupOracle(X_data=X, y_data=y, noise_std=noise_std)
+from molbo.dataset.mcl1 import Mcl1Dataset
+from molbo.oracle.factory import oracle_from_dataset
 
 
-def mcl1_vina(noise_std=0.0):
-    df = load_mcl1_data()[:10000]
-    smiles_list = df["prot_smiles"].to_list()
-    X = torch.vstack([smiles_to_morgan_fp(s) for s in smiles_list])
-    y = -torch.tensor(df["vina_score"].values, dtype=torch.float64).unsqueeze(-1)
-    return LookupOracle(X_data=X, y_data=y, noise_std=noise_std)
+def mcl1_qed(noise_std: float = 0.0, n: int = None):
+    dataset = Mcl1Dataset()
+    return oracle_from_dataset(dataset, column="qed", noise_std=noise_std, n=n)
 
 
-def mcl1_mmgbsa(noise_std=0.0):
-    df = load_mcl1_data()[:10000]
-    smiles_list = df["prot_smiles"].to_list()
-    X = torch.vstack([smiles_to_morgan_fp(s) for s in smiles_list])
-    y = -torch.tensor(df["mmgbsa_score"].values, dtype=torch.float64).unsqueeze(-1)
-    return LookupOracle(X_data=X, y_data=y, noise_std=noise_std)
+def mcl1_vina(noise_std: float = 0.0, n: int = None):
+    dataset = Mcl1Dataset()
+    return oracle_from_dataset(dataset, column="vina", negate=True, noise_std=noise_std, n=n)
+
+
+def mcl1_mmgbsa(noise_std: float = 0.0, n: int = None):
+    dataset = Mcl1Dataset()
+    return oracle_from_dataset(dataset, column="mmgbsa", negate=True, noise_std=noise_std, n=n)

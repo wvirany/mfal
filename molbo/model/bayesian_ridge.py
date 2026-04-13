@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.linear_model import BayesianRidge
 
-from molbo.models.base import SurrogateModel
+from molbo.model.base import SurrogateModel
 
 # CURRENTLY DEPRECATED
 

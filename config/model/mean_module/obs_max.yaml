@@ -1,1 +1,1 @@
-_target_: molbo.models.modules.FixedObservationMax
+_target_: molbo.model.modules.FixedObservationMax

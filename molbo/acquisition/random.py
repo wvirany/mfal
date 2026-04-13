@@ -5,7 +5,7 @@ from typing import Set
 import numpy as np
 
 from molbo.acquisition.base import AcquisitionFunction
-from molbo.models.base import SurrogateModel
+from molbo.model.base import SurrogateModel
 
 
 class RandomAcquisition(AcquisitionFunction):

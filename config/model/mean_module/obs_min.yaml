@@ -1,1 +1,1 @@
-_target_: molbo.models.modules.FixedObservationMin
+_target_: molbo.model.modules.FixedObservationMin
