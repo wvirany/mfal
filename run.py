@@ -45,6 +45,7 @@ def main(cfg: DictConfig):
         oracle,
         candidates=candidates,
         observed_indices=observed_indices,
+        sample=cfg.bo.sample,
         metrics=metrics,
         checkpoint=checkpoint,
         device=device,
