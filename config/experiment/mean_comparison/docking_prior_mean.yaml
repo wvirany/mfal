@@ -1,7 +1,7 @@
 # @package _global_
 wandb:
   mode: online
-  experiment: mean_comparison
+  experiment: docking_prior_mean
 
 bo:
   n_iters: 500
@@ -16,7 +16,3 @@ hydra:
       model/mean_module: mcl1_docking
       oracle: mcl1/mmgbsa
       seed: range(0,5)
-  launcher:
-    timeout_min: 120
-    mem_gb: 32
-    gres: gpu:h100:1

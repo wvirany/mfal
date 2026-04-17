@@ -1,0 +1,17 @@
+# @package _global_
+wandb:
+  mode: disabled
+  experiment: test
+
+bo:
+  n_iters: 25
+  checkpoint: true
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      acquisition: ei
+      model: gp
+      oracle: synthetic/ackley
+      seed: 0

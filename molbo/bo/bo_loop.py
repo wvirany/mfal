@@ -124,8 +124,8 @@ class BOLoop:
             if self.metrics is not None:
                 self.metrics.update(i)
 
-        # Final model fit for loss tracking
-        self.model.fit()
+        if self.checkpoint is not None:
+            self.checkpoint.save(self.history)
 
         return self.history
 

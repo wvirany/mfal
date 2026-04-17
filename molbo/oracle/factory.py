@@ -1,7 +1,7 @@
 import torch
 
 from molbo.dataset.base import Dataset
-from molbo.oracle import LookupOracle
+from molbo.oracle.lookup import LookupOracle
 from molbo.utils.helpers import smiles_to_morgan_fp
 
 

@@ -10,6 +10,21 @@ from omegaconf import DictConfig
 import wandb
 
 
+def get_run_info(cfg):
+    choices = HydraConfig.get().runtime.choices
+    experiment_path = choices.get("experiment", "unnamed")
+
+    parts = [
+        v.split("/")[-1]
+        for k, v in choices.items()
+        if not k.startswith("hydra") and k not in ("experiment", "seed") and v is not None
+    ]
+    group = "_".join(parts)
+    seed = cfg.seed
+
+    return experiment_path, group, seed
+
+
 class WandBLogger:
     """Wrapper for WandB logger."""
 
@@ -35,16 +50,17 @@ class WandBLogger:
 
     @classmethod
     def init_from_cfg(cls, cfg: DictConfig):
-        run_name, group, tags = get_run_info(cfg)
+        _, run_name, seed = get_run_info(cfg)
 
+        tags = run_name.split("_")
         experiment = cfg.wandb.get("experiment", None)
         if experiment is not None:
             tags.append(experiment)
 
         return cls(
             project_name=cfg.wandb.project,
-            run_name=run_name,
-            group=group,
+            run_name=f"{run_name}_seed{seed}",
+            group=run_name,
             tags=tags,
             config=dict(cfg),
             mode=cfg.wandb.mode,
@@ -64,69 +80,13 @@ class WandBLogger:
         self.run.finish()
 
 
-class WandBResults:
-    def __init__(self, project: str, experiment: str = None):
-        self.project = project
-        self.experiment = experiment
-        self.api = wandb.Api()
-        self.runs = None
-        self.summary_df = None
-        self.history_df = None
-
-    def fetch_runs(self):
-        filters = {}
-        if self.experiment is not None:
-            filters = {"tags": {"$in": [self.experiment]}}
-
-        self.runs = list(self.api.runs(self.project, filters=filters))
-        print(f"Found {len(self.runs)} runs")
-
-        rows = []
-        for run in self.runs:
-            row = {"run_id": run.id}
-            for tag in run.tags:
-                row[tag] = True
-            summary = run.summary._json_dict
-            if isinstance(summary, str):
-                summary = json.loads(summary)
-            row.update({k: v for k, v in summary.items() if not k.startswith("_")})
-            rows.append(row)
-
-        self.summary_df = pd.DataFrame(rows)
-
-    def fetch_history(self):
-        assert self.runs is not None, "Call fetch_runs() first"
-
-        dfs = []
-        for run in self.runs:
-            df = run.history()
-            df["run_id"] = run.id
-            for tag in run.tags:
-                df[tag] = True
-            dfs.append(df)
-
-        self.history_df = pd.concat(dfs, ignore_index=True)
-        self.history_df = self.history_df.loc[:, ~self.history_df.columns.str.startswith("_")]
-        return self
-
-    def save(self, path: str):
-        assert self.summary_df is not None, "No data to save - call fetch_runs() first"
-        Path(path).parent.mkdir(parents=True, exist_ok=True)
-        pd.to_pickle({"summary_df": self.summary_df, "history_df": self.history_df}, path)
-        print(f"Saved to {path}")
-
-    @staticmethod
-    def load(path: str) -> dict:
-        return pd.read_pickle(path)
-
-
 class BOCheckpoint:
     def __init__(self, cfg):
-        run_name, _, _ = get_run_info(cfg)
+        experiment_path, run_name, seed = get_run_info(cfg)
         self.run_name = run_name
-        self.experiment = cfg.wandb.get("experiment", None)
+        self.seed = seed
         self.checkpoint_freq = cfg.bo.checkpoint_freq
-        self.path = Path("checkpoints") / self.experiment / self.run_name / "checkpoint.pt"
+        self.path = Path("experiments") / experiment_path / run_name / f"seed{seed}.pt"
 
     def save(self, history):
         self.path.parent.mkdir(parents=True, exist_ok=True)
@@ -148,16 +108,3 @@ class BOCheckpoint:
             torch.cuda.set_rng_state(data["cuda_rng_state"])
         print(f"Resuming {self.run_name} from iteration {len(data['history']['iteration'])}")
         return data["history"]
-
-
-def get_run_info(cfg):
-    choices = HydraConfig.get().runtime.choices
-    tags = [
-        v.replace("/", "_")
-        for k, v in choices.items()
-        if not k.startswith("hydra") and v is not None
-    ]
-    group = "_".join(tags)
-    run_name = f"{group}_seed{cfg.seed}"
-
-    return run_name, group, tags

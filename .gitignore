@@ -1,8 +1,10 @@
 docs/
 notebooks/
-checkpoints/
 .ruff_cache
 *-dev.*
+
+# Checkpoints
+experiments/
 
 # Large files
 results/
