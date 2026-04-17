@@ -1,0 +1,18 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: gfn_bo
+
+bo:
+  n_iters: 500
+  checkpoint: true
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      acquisition: ei,ucb
+      bo.sample: true,false
+      model: tanimoto_gp
+      oracle: tiny_lib/qed
+      seed: range(0,10)

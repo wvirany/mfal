@@ -9,6 +9,7 @@ bo:
   n_iters: 15
   checkpoint: false
   checkpoint_freq: 100
+  sample: false
 
 seed: 0
 
