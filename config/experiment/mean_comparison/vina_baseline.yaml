@@ -1,0 +1,17 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: docking_prior_mean
+
+bo:
+  n_iters: 500
+  checkpoint: true
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      acquisition: ei,ucb
+      model: tanimoto_gp
+      oracle: mcl1/vina
+      seed: range(0,5)
