@@ -6,6 +6,7 @@ wandb:
 bo:
   n_iters: 500
   checkpoint: true
+  checkpoint_freq: 25
 
 hydra:
   mode: MULTIRUN
