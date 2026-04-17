@@ -11,7 +11,7 @@ hydra:
   mode: MULTIRUN
   sweeper:
     params:
-      acquisition: ei,ucb
+      acquisition: ei
       model: tanimoto_gp
       oracle: mcl1/vina
       seed: range(0,5)
