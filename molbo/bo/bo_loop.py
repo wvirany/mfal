@@ -145,7 +145,7 @@ class BOLoop:
                         acq_function=self.acq_func.acq_func,
                         q=1,
                         choices=filtered_candidates,
-                        max_batch_size=2048,
+                        max_batch_size=1024,
                     )
                     local_idx = (filtered_candidates == new_X).all(dim=-1).nonzero()[0].item()
 
