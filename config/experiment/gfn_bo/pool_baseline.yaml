@@ -15,4 +15,4 @@ hydra:
       bo.sample: true,false
       model: tanimoto_gp
       oracle: tiny_lib/qed
-      seed: range(0,10)
+      seed: range(0,5)

@@ -4,6 +4,7 @@ timeout_min: 60
 cpus_per_task: 4
 mem_gb: 8
 array_parallelism: 256
+max_num_timeout: 0
 setup:
   - module load python/3.11 rdkit/2024.09.6 cuda/12.6
   - source ~/scratch/molbo/venv/bin/activate
