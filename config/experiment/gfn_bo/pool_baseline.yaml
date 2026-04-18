@@ -12,7 +12,7 @@ hydra:
   sweeper:
     params:
       acquisition: ei,ucb
-      bo.sample: true,false
+      acqf_optimizer: maximize,sample
       model: tanimoto_gp
       oracle: tiny_lib/qed
       seed: range(0,5)

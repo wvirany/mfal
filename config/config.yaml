@@ -2,6 +2,7 @@ defaults:
   - model: gp
   - acquisition: ei
   - oracle: synthetic/gaussian_mixture_1d
+  - acqf_optimizer: maximize
   - _self_
 
 bo:
