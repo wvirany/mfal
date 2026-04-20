@@ -13,6 +13,10 @@ import wandb
 def get_run_info(cfg):
     choices = HydraConfig.get().runtime.choices
     experiment_path = choices.get("experiment", "unnamed")
+    seed = cfg.seed
+
+    if run_name := cfg.get("run_name"):
+        return experiment_path, run_name, seed
 
     parts = [
         v.split("/")[-1]
@@ -20,7 +24,6 @@ def get_run_info(cfg):
         if not k.startswith("hydra") and k not in ("experiment", "seed") and v is not None
     ]
     group = "_".join(parts)
-    seed = cfg.seed
 
     return experiment_path, group, seed
 

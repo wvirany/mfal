@@ -14,6 +14,8 @@ def main(cfg: DictConfig):
     torch.manual_seed(cfg.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
+    print(cfg.run_name)
+
     # Instantiate dataset and oracle
     dataset = instantiate(cfg.dataset) if cfg.get("dataset") else None
     if dataset is not None:
