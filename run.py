@@ -26,7 +26,7 @@ def main(cfg: DictConfig):
             negate=cfg.oracle.get("negate", False),
             noise_std=cfg.oracle.get("noise_std", 0.0),
             n=n,
-        )
+        ).to(device)
         candidates = dataset.candidates[:n] if n is not None else dataset.candidates
         candidates = candidates.to(device)
     else:
