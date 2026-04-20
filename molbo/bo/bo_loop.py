@@ -100,7 +100,7 @@ class BOLoop:
                 global_idx = self.oracle._hash_to_idx[
                     hash(new_X.squeeze(0).cpu().numpy().tobytes())
                 ]
-                _, new_y = self.oracle[global_idx]
+                new_y = self.oracle[global_idx][1].unsqueeze(0)
                 self.candidates_mask[global_idx] = False
             # Continuous / generative
             else:
