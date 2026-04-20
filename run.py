@@ -28,6 +28,7 @@ def main(cfg: DictConfig):
             n=n,
         )
         candidates = dataset.candidates[:n] if n is not None else dataset.candidates
+        candidates = candidates.to(device)
     else:
         oracle = instantiate(cfg.oracle).to(device)
         candidates = None
