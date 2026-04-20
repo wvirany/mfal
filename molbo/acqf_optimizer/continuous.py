@@ -18,7 +18,7 @@ class ContinuousMaximizer(AcqfOptimizer):
             num_restarts=self.num_restarts,
             raw_samples=self.raw_samples,
         )
-        return new_X, acq_val, None
+        return new_X, acq_val
 
 
 class ContinuousSampler(AcqfOptimizer):
@@ -36,4 +36,4 @@ class ContinuousSampler(AcqfOptimizer):
             acq_values = acq_func(X_grid.reshape(-1, 1, 1)).squeeze()
         probs = acq_values / acq_values.sum()
         idx = torch.multinomial(probs, num_samples=1).item()
-        return X_grid[idx].unsqueeze(0), acq_values[idx], None
+        return X_grid[idx].unsqueeze(0), acq_values[idx]

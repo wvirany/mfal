@@ -13,8 +13,7 @@ class AcqfOptimizer(ABC):
         Optimize acquisition function and return next candidate(s).
 
         Returns:
-            new_X: (1, d) tensor
-            acq_val: scalar tensor
-            local_idx: int or None (only for pool-based optimizers)
+            new_X: (q, d) tensor
+            acq_val: (q,) tensor
         """
         pass

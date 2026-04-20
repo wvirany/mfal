@@ -94,15 +94,17 @@ class BOLoop:
 
             # Pool-based
             if self.candidates is not None:
-                new_X, acq_val, local_idx = self.acqf_optimizer.optimize(
+                new_X, acq_val = self.acqf_optimizer.optimize(
                     self.acq_func, self.candidates[self.candidates_mask]
                 )
-                global_idx = self.local_to_global_idx(local_idx)
+                global_idx = self.oracle._hash_to_idx[
+                    hash(new_X.squeeze(0).cpu().numpy().tobytes())
+                ]
                 _, new_y = self.oracle[global_idx]
                 self.candidates_mask[global_idx] = False
             # Continuous / generative
             else:
-                new_X, acq_val, _ = self.acqf_optimizer.optimize(self.acq_func)
+                new_X, acq_val = self.acqf_optimizer.optimize(self.acq_func)
                 new_y = self.oracle(new_X)
 
             # Update dataset
@@ -134,6 +136,3 @@ class BOLoop:
             self.checkpoint.save(self.history)
 
         return self.history
-
-    def local_to_global_idx(self, local_idx):
-        return self.candidates_mask.nonzero(as_tuple=True)[0][local_idx]
