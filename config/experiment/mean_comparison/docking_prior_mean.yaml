@@ -14,7 +14,9 @@ hydra:
   mode: MULTIRUN
   sweeper:
     params:
+      dataset: mcl1
       acquisition: ei
+      acqf_optimizer: pool_maximizer
       model: tanimoto_gp
       model/mean_module: mcl1_docking
       oracle: mcl1/mmgbsa
