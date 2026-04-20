@@ -8,6 +8,8 @@ bo:
   checkpoint: true
   checkpoint_freq: 25
 
+run_name: mmgbsa_ei_tanimoto_gp_mcl1_docking
+
 hydra:
   mode: MULTIRUN
   sweeper:

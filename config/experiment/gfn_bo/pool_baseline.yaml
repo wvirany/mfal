@@ -15,7 +15,7 @@ hydra:
     params:
       dataset: tiny_lib
       acquisition: ei,ucb
-      acqf_optimizer: maximize,sample
+      acqf_optimizer: pool_maximizer,pool_sampler
       model: tanimoto_gp
       oracle: tiny_lib/qed
       seed: range(0,10)

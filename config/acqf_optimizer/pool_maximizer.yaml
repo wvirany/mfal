@@ -1,1 +1,4 @@
 _target_: molbo.acqf_optimizer.PoolMaximizer
+
+q: 1
+max_batch_size: 1024
