@@ -70,7 +70,9 @@ class BOLoop:
         # Initialize candidate set and observed indices mask in fixed-pool setting
         self.candidates = candidates
         if (candidates is not None) and (observed_indices is not None):
-            self.candidates_mask = torch.ones(len(candidates), dtype=torch.bool)
+            self.candidates_mask = torch.ones(
+                len(candidates), dtype=torch.bool, device=candidates.device
+            )
             self.candidates_mask[observed_indices] = False
 
         # Initialize model
