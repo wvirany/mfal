@@ -50,6 +50,9 @@ class LookupOracle(Oracle):
         indices = [self._hash_to_idx[hash(row.cpu().numpy().tobytes())] for row in X]
         return self.y_data[indices]
 
+    def __getitem__(self, idx):
+        return self.X_data[idx], self.y_data[idx]
+
     @property
     def candidates(self):
         return self.X_data

@@ -1,2 +1,3 @@
-_target_: molbo.oracle.molecular.mcl1_qed
+column: qed
+negate: false
 noise_std: 0.0

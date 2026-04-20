@@ -1,10 +1,10 @@
 import hydra
 import torch
-from hydra.core.hydra_config import HydraConfig
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 from molbo.bo import BOLoop, BOMetrics
+from molbo.oracle.factory import oracle_from_dataset
 from molbo.utils import sample_init
 from molbo.utils.logger import BOCheckpoint, WandBLogger
 
@@ -14,24 +14,42 @@ def main(cfg: DictConfig):
     torch.manual_seed(cfg.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    # Instantiate components
-    oracle = instantiate(cfg.oracle).to(device)
+    # Instantiate dataset and oracle
+    dataset = instantiate(cfg.dataset) if cfg.get("dataset") else None
+    if dataset is not None:
+        n = cfg.get("n")
+        oracle = oracle_from_dataset(
+            dataset,
+            column=cfg.oracle.column,
+            negate=cfg.oracle.get("negate", False),
+            noise_std=cfg.oracle.get("noise_std", 0.0),
+            n=n,
+        )
+        candidates = dataset.candidates[:n] if n is not None else dataset.candidates
+    else:
+        oracle = instantiate(cfg.oracle).to(device)
+        candidates = None
+
+    # Instantiate other components
+    acqf_optimizer = instantiate(cfg.acqf_optimizer)
+    acqf_optimizer.bounds = getattr(oracle, "bounds", None)
     acq_func = instantiate(cfg.acquisition)
     model = instantiate(cfg.model)
 
     logger = WandBLogger.init_from_cfg(cfg)
 
     # Init data
-    train_X, train_y, observed_indices = sample_init(oracle, n_init=cfg.bo.n_init)
+    train_X, train_y, observed_indices = sample_init(
+        oracle, n_init=cfg.bo.n_init, candidates=candidates
+    )
 
-    # Class for computing metrics; top_k_threshold and n_top_k used by LookupOracle
+    # Class for computing metrics; top_k_threshold and n_top_k provided by LookupOracle
     metrics = BOMetrics(
         f_max=oracle.optimal_value,
         logger=logger,
         top_k_threshold=getattr(oracle, "top_k_threshold", None),
         n_top_k=getattr(oracle, "n_top_k", None),
     )
-    candidates = getattr(oracle, "candidates", None)
 
     # Create checkpoint class for saving / loading
     checkpoint = BOCheckpoint(cfg) if cfg.bo.checkpoint else None
@@ -43,13 +61,14 @@ def main(cfg: DictConfig):
         model,
         acq_func,
         oracle,
+        acqf_optimizer,
         candidates=candidates,
         observed_indices=observed_indices,
-        sample=cfg.bo.sample,
         metrics=metrics,
         checkpoint=checkpoint,
         device=device,
     )
+
     history = bo.run(n_iters=cfg.bo.n_iters)
 
     logger.finish()

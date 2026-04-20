@@ -1,30 +1,29 @@
 import torch
 
 from molbo.dataset.base import Dataset
+from molbo.oracle.base import Oracle
 from molbo.oracle.lookup import LookupOracle
 from molbo.utils.helpers import smiles_to_morgan_fp
 
 
 def oracle_from_dataset(
     dataset: Dataset,
-    column: str = None,
-    evaluate_fn=None,
+    column: str,
+    oracle: Oracle = None,
     noise_std: float = 0.0,
     negate: bool = False,
     n: int = None,
 ) -> LookupOracle:
-    assert (column is None) != (
-        evaluate_fn is None
-    ), "Exactly one of column or evaluate_fn must be provided"
+    X = dataset.candidates[:n] if n is not None else dataset.candidates
 
-    smiles = dataset.smiles[:n] if n is not None else dataset.smiles
-
-    X = torch.vstack([smiles_to_morgan_fp(s) for s in smiles])
-
-    if column is not None:
+    if column in dataset.columns:
         y = dataset.columns[column][:n].unsqueeze(-1)
     else:
-        y = torch.tensor(evaluate_fn(smiles), dtype=torch.float64).unsqueeze(-1)
+        assert oracle is not None, f"Column '{column}' not in dataset and no oracle provided"
+        full_X = dataset.candidates
+        y_full = oracle(full_X)
+        dataset.save_column(column, y_full.squeeze(-1))
+        y = y_full[:n].unsqueeze(-1) if n is not None else y_full
 
     if negate:
         y = -y

@@ -2,7 +2,7 @@ defaults:
   - model: gp
   - acquisition: ei
   - oracle: synthetic/gaussian_mixture_1d
-  - acqf_optimizer: maximize
+  - acqf_optimizer: continuous_maximizer
   - _self_
 
 bo:
@@ -10,9 +10,9 @@ bo:
   n_iters: 15
   checkpoint: false
   checkpoint_freq: 100
-  sample: false
 
 seed: 0
+n: null
 
 wandb:
   project: molbo

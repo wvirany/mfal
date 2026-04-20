@@ -7,18 +7,16 @@ from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem.QED import qed
 
 
-def sample_init(oracle, n_init):
-    from molbo.oracle import AnalyticOracle, LookupOracle
+def sample_init(oracle, n_init, candidates=None):
 
-    if isinstance(oracle, AnalyticOracle):
+    if candidates is not None:
+        indices = np.random.choice(len(candidates), n_init, replace=False).tolist()
+        X, y = oracle[indices]
+    else:
         indices = None
         bounds = oracle.bounds
         X = torch.rand(n_init, oracle.dim).to(bounds) * (bounds[1] - bounds[0]) + bounds[0]
         y = oracle(X)
-    elif isinstance(oracle, LookupOracle):
-        indices = np.random.choice(len(oracle.X_data), n_init, replace=False).tolist()
-        X = oracle.X_data[indices]
-        y = oracle.y_data[indices]
 
     return X, y, indices
 

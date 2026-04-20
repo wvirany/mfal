@@ -1,0 +1,3 @@
+_target_: molbo.acqf_optimizer.ContinuousMaximizer
+num_restarts: 5
+raw_samples: 20
