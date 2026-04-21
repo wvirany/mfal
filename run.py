@@ -46,6 +46,8 @@ def main(cfg: DictConfig):
         oracle, n_init=cfg.bo.n_init, candidates=candidates
     )
 
+    print("Initial dataset size:", len(train_X))
+
     # Class for computing metrics; top_k_threshold and n_top_k provided by LookupOracle
     metrics = BOMetrics(
         f_max=oracle.optimal_value,
@@ -76,7 +78,8 @@ def main(cfg: DictConfig):
 
     logger.finish()
 
-    print(history["y_observed"].max())
+    print("Final dataset size:", len(history["y_init"]) + len(history["y_observed"]))
+    print(f"Best observed value: {history['y_observed'].max().item():.4f}")
 
 
 if __name__ == "__main__":

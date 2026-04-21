@@ -97,11 +97,12 @@ class BOLoop:
                 new_X, acq_val = self.acqf_optimizer.optimize(
                     self.acq_func, self.candidates[self.candidates_mask]
                 )
-                global_idx = self.oracle._hash_to_idx[
-                    hash(new_X.squeeze(0).cpu().numpy().tobytes())
-                ]
-                new_y = self.oracle[global_idx][1].unsqueeze(0)
-                self.candidates_mask[global_idx] = False
+                hash_idxs = [hash(x.cpu().numpy().tobytes()) for x in new_X]
+                global_idxs = [self.oracle._hash_to_idx[h] for h in hash_idxs]
+                new_y = self.oracle[global_idxs][1]
+                if new_y.dim() == 1:
+                    new_y = new_y.unsqueeze(-1)
+                self.candidates_mask[global_idxs] = False
             # Continuous / generative
             else:
                 new_X, acq_val = self.acqf_optimizer.optimize(self.acq_func)
@@ -119,9 +120,9 @@ class BOLoop:
                 (self.history["y_observed"], new_y.detach().cpu())
             )
             if self.candidates is not None:
-                self.history["observed_indices"].append(global_idx)
+                self.history["observed_indices"].extend(global_idxs)
             self.history["iteration"].append(i)
-            self.history["acq_vals"].append(acq_val.item())
+            self.history["acq_vals"].extend(acq_val.reshape(-1).tolist())
             self.history["model_loss"].append(self.model.loss().item())
 
             # Save checkpoint
