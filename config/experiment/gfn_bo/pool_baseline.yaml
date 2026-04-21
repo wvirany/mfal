@@ -4,10 +4,10 @@ wandb:
   experiment: gfn_bo
 
 bo:
-  n_iters: 500
+  n_iters: 1000
   checkpoint: true
 
-run_name: "maximize_qed_${hydra:runtime.choices.acquisition}_tanimoto_gp"
+run_name: "${hydra:runtime.choices.acqf_optimizer}_${hydra:runtime.choices.acquisition}"
 
 hydra:
   mode: MULTIRUN
@@ -16,6 +16,7 @@ hydra:
       dataset: tiny_lib
       acquisition: ei,ucb
       acqf_optimizer: pool_maximizer,pool_sampler
+      acqf_optimizer.max_batch_size: 512
       model: tanimoto_gp
       oracle: tiny_lib/qed
       seed: range(0,10)
