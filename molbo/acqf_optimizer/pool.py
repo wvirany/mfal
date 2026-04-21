@@ -20,7 +20,8 @@ class PoolMaximizer(AcqfOptimizer):
 
 
 class PoolSampler(AcqfOptimizer):
-    def __init__(self, max_batch_size: int = 1024):
+    def __init__(self, q: int = 1, max_batch_size: int = 1024):
+        self.q = q
         self.max_batch_size = max_batch_size
 
     def optimize(self, acq_func, candidates: torch.Tensor):
@@ -31,8 +32,11 @@ class PoolSampler(AcqfOptimizer):
                     for chunk in candidates.split(self.max_batch_size)
                 ]
             )
+        assert (
+            acq_values > 0
+        ).all(), "Negative acquisition values encounted; not handled for sampling"
         probs = acq_values / acq_values.sum()
-        idx = torch.multinomial(probs, num_samples=1)
+        idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
         new_X = candidates[idx]
         acq_val = acq_values[idx]
         return new_X, acq_val

@@ -1,3 +1,4 @@
 _target_: molbo.acqf_optimizer.ContinuousSampler
 
+q: 1
 n_samples: 1000
