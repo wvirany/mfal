@@ -1,0 +1,12 @@
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+account: rrg-mkoz
+cpus_per_task: 4
+array_parallelism: 32
+timeout_min: 120
+mem_gb: 32
+gres: gpu:gpu:nvidia_h100_80gb_hbm3_1g.10gb:1
+max_num_timeout: 0
+setup:
+  - module load python/3.11 rdkit/2024.09.6 cuda/12.6
+  - source ~/scratch/molbo/venv/bin/activate
