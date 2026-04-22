@@ -34,7 +34,7 @@ class PoolSampler(AcqfOptimizer):
             )
         assert (
             acq_values > 0
-        ).all(), "Negative acquisition values encounted; not handled for sampling"
+        ).all(), "Negative acquisition values encountered; not handled for sampling"
         probs = acq_values / acq_values.sum()
         idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
         new_X = candidates[idx]

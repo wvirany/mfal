@@ -2,6 +2,7 @@ docs/
 notebooks/
 .ruff_cache
 *-dev.*
+scripts/
 
 # Checkpoints
 experiments/
