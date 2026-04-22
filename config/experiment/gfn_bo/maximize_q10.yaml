@@ -18,7 +18,7 @@ hydra:
       acquisition: qei,qucb
       acqf_optimizer: pool_maximizer
       acqf_optimizer.q: 10
-      acqf_optimizer.max_batch_size: 512
+      acqf_optimizer.max_batch_size: 256
       model: tanimoto_gp
       oracle: tiny_lib/qed
       seed: range(0,10)
