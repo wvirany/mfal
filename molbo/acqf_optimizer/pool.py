@@ -32,10 +32,18 @@ class PoolSampler(AcqfOptimizer):
                     for chunk in candidates.split(self.max_batch_size)
                 ]
             )
-        assert (
-            acq_values > 0
-        ).all(), "Negative acquisition values encountered; not handled for sampling"
-        probs = acq_values / acq_values.sum()
+
+        # Guard against the case when acquisition values are negative
+        if (acq_values < 0).any():
+            print("Warning: negative acquisition values encountered during sampling")
+            print(f"Total acq_vals < 0: {(acq_values < 0).sum()}")
+        assert not (acq_values < 0).all(), "All acquisition values are negative"
+        assert acq_values.sum() > 0, "Normalization constant is negative; exiting"
+
+        # Clamp negative values
+        acq_clamped = acq_values.clamp(min=0)
+        probs = acq_clamped / acq_clamped.sum()
+
         idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
         new_X = candidates[idx]
         acq_val = acq_values[idx]
