@@ -1,0 +1,24 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: gfn_bo_mcl1
+
+bo:
+  n_iters: 200
+  checkpoint: true
+  checkpoint_freq: 20
+
+run_name: "${hydra:runtime.choices.acqf_optimizer}_${hydra:runtime.choices.acquisition}_q5"
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      dataset: mcl1
+      acquisition: qei,qucb
+      acqf_optimizer: pool_maximizer
+      acqf_optimizer.q: 5
+      acqf_optimizer.max_batch_size: 256
+      model: tanimoto_gp
+      oracle: mcl1/mmgbsa
+      seed: range(0,5)
