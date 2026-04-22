@@ -1,7 +1,7 @@
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 max_num_timeout: 0
-array_parallelism: 10
+array_parallelism: 64
 cpus_per_task: 4
 timeout_min: 1440
 mem_gb: 16
