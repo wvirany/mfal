@@ -20,6 +20,12 @@ class Mcl1Dataset(Dataset):
             "mmgbsa": torch.tensor(df["mmgbsa_score"].values, dtype=torch.float64),
         }
 
+        # SMILES and columns must be set before initializing base Dataset class
+        super().__init__()
+
+        # Use _unique_indices computed in super().__init__()
+        self._columns = {k: v[self._unique_indices] for k, v in self._columns.items()}
+
     @property
     def smiles(self) -> List[str]:
         return self._smiles
