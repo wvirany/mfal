@@ -12,18 +12,19 @@ def oracle_from_dataset(
     oracle: Oracle = None,
     noise_std: float = 0.0,
     negate: bool = False,
-    n: int = None,
+    indices: torch.Tensor = None,
 ) -> LookupOracle:
-    X = dataset.candidates[:n] if n is not None else dataset.candidates
+    X = dataset.candidates[indices] if indices is not None else dataset.candidates
 
     if column in dataset.columns:
-        y = dataset.columns[column][:n].unsqueeze(-1)
+        y = dataset.columns[column][indices].unsqueeze(-1)
     else:
         assert oracle is not None, f"Column '{column}' not in dataset and no oracle provided"
         full_X = dataset.candidates
+        print("Warning: oracle still being computed on full_X in oracle_from_dataset()")
         y_full = oracle(full_X)
         dataset.save_column(column, y_full.squeeze(-1))
-        y = y_full[:n].unsqueeze(-1) if n is not None else y_full
+        y = y_full[indices].unsqueeze(-1) if indices is not None else y_full
 
     if negate:
         y = -y

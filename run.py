@@ -20,14 +20,15 @@ def main(cfg: DictConfig):
     dataset = instantiate(cfg.dataset) if cfg.get("dataset") else None
     if dataset is not None:
         n = cfg.get("n")
+        indices = torch.randperm(len(dataset.candidates))[:n] if n is not None else None
         oracle = oracle_from_dataset(
             dataset,
             column=cfg.oracle.column,
             negate=cfg.oracle.get("negate", False),
             noise_std=cfg.oracle.get("noise_std", 0.0),
-            n=n,
+            indices=indices,
         ).to(device)
-        candidates = dataset.candidates[:n] if n is not None else dataset.candidates
+        candidates = dataset.candidates[indices] if indices is not None else dataset.candidates
         candidates = candidates.to(device)
     else:
         oracle = instantiate(cfg.oracle).to(device)

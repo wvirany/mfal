@@ -9,6 +9,7 @@ bo:
   checkpoint_freq: 4
 
 run_name: "${hydra:runtime.choices.acqf_optimizer}_${hydra:runtime.choices.acquisition}_${hydra:runtime.choices.oracle}_q25"
+n: 50000
 
 hydra:
   mode: MULTIRUN
@@ -20,8 +21,8 @@ hydra:
       acqf_optimizer.q: 25
       acqf_optimizer.max_batch_size: 128
       model: tanimoto_gp
-      oracle: zinc250k/qed,zinc250k/jnk3,zinc250k/gsk3b
+      oracle: zinc250k/qed,zinc250k/jnk3
       seed: range(0,5)
   launcher:
-    timeout_min: 180
+    timeout_min: 120
     max_num_timeout: 1
