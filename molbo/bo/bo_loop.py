@@ -137,6 +137,9 @@ class BOLoop:
             if self.metrics is not None:
                 self.metrics.update(i)
 
+        if self.candidates is not None and self.metrics is not None:
+            self.history["batch_metrics"] = self.metrics.compute_batch_metrics()
+
         if self.checkpoint is not None:
             self.checkpoint.save(self.history)
 
