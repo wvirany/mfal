@@ -3,7 +3,7 @@ notebooks/
 .ruff_cache
 *-dev.*
 scripts/
-oracle/
+./oracle/
 
 # Checkpoints
 experiments/

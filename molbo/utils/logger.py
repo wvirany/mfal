@@ -16,7 +16,7 @@ def get_run_info(cfg):
     seed = cfg.seed
 
     if run_name := cfg.get("run_name"):
-        return experiment_path, run_name, seed
+        return experiment_path, run_name.replace("/", "_"), seed
 
     parts = [
         v.split("/")[-1]

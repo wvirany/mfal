@@ -16,7 +16,7 @@ hydra:
       dataset: mcl1
       acquisition: ei,ucb
       acqf_optimizer: pool_maximizer,pool_sampler
-      acqf_optimizer.max_batch_size: 256
+      acqf_optimizer.max_batch_size: 512
       model: tanimoto_gp
       oracle: mcl1/mmgbsa
       seed: range(0,5)
