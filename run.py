@@ -21,6 +21,7 @@ def main(cfg: DictConfig):
 
     # Instantiate dataset and oracle
     indices = None
+    candidate_smiles = None
     dataset = instantiate(cfg.dataset) if cfg.get("dataset") else None
     if dataset is not None:
         n = cfg.get("n")
@@ -36,6 +37,10 @@ def main(cfg: DictConfig):
         ).to(device)
         candidates = dataset.candidates[indices] if indices is not None else dataset.candidates
         candidates = candidates.to(device)
+
+        candidate_smiles = dataset.candidate_smiles
+        if indices is not None:
+            candidate_smiles = [candidate_smiles[i] for i in indices]
     else:
         oracle = instantiate(cfg.oracle).to(device)
         candidates = None
@@ -58,9 +63,11 @@ def main(cfg: DictConfig):
     # Class for computing metrics; top_k_threshold and n_top_k provided by LookupOracle
     metrics = BOMetrics(
         f_max=oracle.optimal_value,
-        logger=logger,
-        top_k_threshold=getattr(oracle, "top_k_threshold", None),
+        thresholds=getattr(oracle, "thresholds", None),
+        threshold_labels=getattr(oracle, "threshold_labels", None),
         n_top_k=getattr(oracle, "n_top_k", None),
+        smiles=candidate_smiles if dataset is not None else None,
+        logger=logger,
     )
 
     # Run
@@ -74,6 +81,7 @@ def main(cfg: DictConfig):
         candidates=candidates,
         observed_indices=observed_indices,
         indices=indices,
+        candidate_smiles=candidate_smiles,
         metrics=metrics,
         checkpoint=checkpoint,
         device=device,

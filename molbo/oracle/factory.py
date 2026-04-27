@@ -29,4 +29,4 @@ def oracle_from_dataset(
     if negate:
         y = -y
 
-    return LookupOracle(X_data=X, y_data=y, noise_std=noise_std)
+    return LookupOracle(X_data=X, y_data=y, noise_std=noise_std, top_k=[0.01, 0.10])

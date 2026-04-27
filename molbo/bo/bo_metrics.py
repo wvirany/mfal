@@ -1,4 +1,7 @@
 import torch
+from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
+
+from molbo.utils.helpers import get_centroid_indices
 
 
 class BOMetrics:
@@ -6,22 +9,27 @@ class BOMetrics:
     Metrics for BO loop
 
     Args:
-        f_max: Maximumum of oracle
-
-        top_k_threshold: Threshold to compute num samples above
-        n_top_k: Number of samples above top_k_threshold
-        --> (Used for computing retrieval rate in fixed datasets)
-
+        f_max: Maximum of oracle
+        thresholds: Dict mapping top-k fraction to score threshold, e.g. {0.01: 0.9, 0.10: 0.7}
+        n_top_k: Dict mapping top-k fraction to count, e.g. {0.01: 500, 0.10: 5000}
+        smiles: SMILES list for candidate pool, indexed consistently with candidates
         logger: WandBLogger instance
     """
 
     def __init__(
-        self, f_max: float, top_k_threshold: float = None, n_top_k: float = None, logger=None
+        self,
+        f_max: float,
+        thresholds: dict = None,
+        threshold_labels: dict = None,
+        n_top_k: dict = None,
+        smiles: list = None,
+        logger=None,
     ):
         self.f_max = f_max
-        self.top_k_threshold = top_k_threshold
+        self.thresholds = thresholds
+        self.threshold_labels = threshold_labels
         self.n_top_k = n_top_k
-
+        self.smiles = smiles
         self.logger = logger
         self.history = None
 
@@ -29,15 +37,13 @@ class BOMetrics:
         self.history = history
 
     def update(self, iteration):
-        y = torch.cat(
-            [
-                self.history["y_init"],
-                self.history["y_observed"],
-            ]
-        ).squeeze()
+        y_init = self.history["y_init"].reshape(-1)
+        y_obs = self.history["y_observed"].reshape(-1)
+        y = torch.cat([y_init, y_obs])
 
         metrics_dict = {
             "iteration": iteration,
+            "n_observed": len(y_obs),
             "acq_val": self.history["acq_vals"][-1],
             "time_per_iter": self.history["time_per_iter"][-1],
             "model_loss": self.history["model_loss"][-1],
@@ -47,32 +53,13 @@ class BOMetrics:
             "cumulative_regret": self._compute_cumulative_regret(y)[-1].item(),
         }
 
-        # Log retrieval rate if applicable
-        if self.top_k_threshold is not None:
-            metrics_dict["retrieval_rate"] = self._compute_retrieval_rate(y)[-1].item()
+        if self.thresholds is not None:
+            for k, threshold in self.thresholds.items():
+                rr = self._compute_retrieval_rate(y, threshold, self.n_top_k[k])
+                metrics_dict[f"retrieval_rate_{self.threshold_labels[k]}"] = rr[-1].item()
 
         if self.logger is not None:
             self.logger.log(metrics_dict)
-
-    def compute_metrics(self):
-        """Compute post-hoc metrics for finished BO run."""
-        y = torch.cat(
-            [
-                self.history["y_init"],
-                self.history["y_observed"],
-            ]
-        ).squeeze()
-
-        return {
-            "simple_regret": self._compute_simple_regret(y),
-            "cumulative_regret": self._compute_cumulative_regret(y),
-            "best_observed": self._compute_best_observed(y),
-            "top10_mean": self._compute_topk_mean(y, k=10),
-            "retrieval_rate": self._compute_retrieval_rate(y),
-        }
-
-    def compute_batch_metrics(self):
-        raise NotImplementedError("Batch metrics not implemented yet")
 
     def _compute_simple_regret(self, y):
         """Compute simple regret at each iteration."""
@@ -97,9 +84,101 @@ class BOMetrics:
                 topk_means.append(y[:i].mean().item())
         return torch.tensor(topk_means)
 
-    def _compute_retrieval_rate(self, y):
+    def _compute_retrieval_rate(self, y, threshold, n_top_k):
         """Compute proportion of samples found above given threshold"""
-        if self.top_k_threshold is None:
-            return None
-        found = (y >= self.top_k_threshold).cumsum(dim=0)
-        return found / self.n_top_k
+        found = (y >= threshold).cumsum(dim=0)
+        return found / n_top_k
+
+    def compute_metrics(self):
+        """
+        Compute all post-hoc diversity metrics. This is typically called after a BO run
+        by loading `history` from a checkpoint and computing post-hoc; it's expensive to compute
+        with WandB during a job.
+        """
+        if self.smiles is None or self.thresholds is None:
+            return
+
+        curves = self.compute_batch_metrics()
+
+        if self.logger is not None:
+            n_iters = len(self.history["iteration"])
+            y_obs = self.history["y_observed"].squeeze()
+            q = len(y_obs) // n_iters
+            for i in range(q, len(y_obs) + 1, q):
+                log_dict = {"n_observed": i}
+                for key, curve in curves.items():
+                    log_dict[key] = curve[(i // q) - 1]
+                self.logger.log(log_dict)
+
+        return curves
+
+    def compute_batch_metrics(self):
+        """
+        Outer loop over batches; compute num modes and num_scaffolds curves
+        for each threshold in acquisition order.
+        """
+        y_obs = self.history["y_observed"].reshape(-1)
+        observed_indices = self.history["observed_indices"]
+        n_iters = len(self.history["iteration"])
+        q = len(y_obs) // n_iters
+
+        mode_curves = {f"num_modes_{self.threshold_labels[k]}": [] for k in self.thresholds}
+        scaffold_curves = {f"num_scaffolds_{self.threshold_labels[k]}": [] for k in self.thresholds}
+        seen_scaffolds = {k: set() for k in self.thresholds}
+
+        for i in range(q, len(y_obs) + 1, q):
+            acq_indices = observed_indices[:i]
+            acq_smiles = [self.smiles[idx] for idx in acq_indices]
+            acq_scores = y_obs[:i]
+
+            # New batch only (for scaffolds and diversity)
+            batch_indices = observed_indices[i - q : i]
+            batch_smiles = [self.smiles[idx] for idx in batch_indices]
+            batch_scores = y_obs[i - q : i]
+
+            # Modes — full recompute on accumulated set
+            num_modes = self._compute_num_modes(acq_smiles, acq_scores)
+            for k in self.thresholds:
+                mode_curves[f"num_modes_{self.threshold_labels[k]}"].append(num_modes[k])
+
+            # Scaffolds - computes incrementally in each batch given the entire set of seen scaffolds
+            for k, threshold in self.thresholds.items():
+                above_threshold = [
+                    smi for smi, s in zip(batch_smiles, batch_scores) if s.item() >= threshold
+                ]
+                count, seen_scaffolds[k] = self._compute_num_scaffolds(
+                    above_threshold, seen_scaffolds[k]
+                )
+                scaffold_curves[f"num_scaffolds_{self.threshold_labels[k]}"].append(count)
+
+        return {**mode_curves, **scaffold_curves}
+
+    def _compute_num_modes(self, smiles, scores):
+        """
+        Greedy Tanimoto clustering (threshold=0.7) in descending score order.
+        Returns count of mode centroids above each score threshold.
+        """
+        centroid_indices = get_centroid_indices(smiles, scores)
+        centroid_scores = scores[centroid_indices]
+
+        return {
+            k: (centroid_scores >= threshold).sum().item()
+            for k, threshold in self.thresholds.items()
+        }
+
+    def _compute_num_scaffolds(self, smiles, seen_scaffolds: set = None):
+        """
+        Number of unique Bemis-Murcko scaffolds in given SMILES list.
+        Optionally builds on an existing set of scaffolds.
+        """
+        if seen_scaffolds is None:
+            seen_scaffolds = set()
+
+        for smi in smiles:
+            try:
+                scaffold = MurckoScaffoldSmiles(smi)
+                seen_scaffolds.add(scaffold)
+            except Exception:
+                continue
+
+        return len(seen_scaffolds), seen_scaffolds

@@ -10,7 +10,7 @@ class LookupOracle(Oracle):
     Assumes a maximization problem. Currently assumes output dim is 1.
     """
 
-    def __init__(self, X_data, y_data, top_k=0.01, noise_std=0.0):
+    def __init__(self, X_data, y_data, top_k=[0.01], noise_std=0.0):
         """
         Args:
             X_data: (N, d) tensor of input features
@@ -26,8 +26,9 @@ class LookupOracle(Oracle):
         self.dim = X_data.shape[-1]
         self._optimal_value = y_data.max().item()
 
-        self.top_k_threshold = torch.quantile(y_data, 1 - top_k).item()
-        self.n_top_k = (y_data >= self.top_k_threshold).sum().item()
+        self.thresholds = {k: torch.quantile(y_data, 1 - k).item() for k in top_k}
+        self.threshold_labels = {k: f"top{round(k * 100)}" for k in top_k}
+        self.n_top_k = {k: (y_data >= self.thresholds[k]).sum().item() for k in top_k}
 
         self._hash_to_idx = {hash(row.numpy().tobytes()): i for i, row in enumerate(X_data)}
 

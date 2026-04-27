@@ -2,7 +2,7 @@ from typing import List
 
 import numpy as np
 import torch
-from rdkit import Chem
+from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem.QED import qed
 
@@ -42,3 +42,20 @@ def smiles_to_qed(smiles: str | List[str]) -> torch.Tensor:
     mols = [Chem.MolFromSmiles(s) for s in smiles]
     scores = [qed(mol) for mol in mols]
     return torch.tensor(scores, dtype=torch.float64)
+
+
+def get_centroid_indices(smiles_list, scores, tanimoto_threshold=0.7):
+    fps = [smiles_to_morgan_fp(s, as_tensor=False) for s in smiles_list]
+    sorted_indices = torch.argsort(scores, descending=True)
+    centroids = []  # list of (fp, idx)
+
+    for i in sorted_indices:
+        fp = fps[i]
+        if len(centroids) == 0:
+            centroids.append((fp, i.item()))
+        else:
+            sims = [DataStructs.TanimotoSimilarity(fp, c_fp) for c_fp, _ in centroids]
+            if max(sims) < tanimoto_threshold:
+                centroids.append((fp, i.item()))
+
+    return [idx for _, idx in centroids]
