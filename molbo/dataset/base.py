@@ -35,6 +35,10 @@ class Dataset(ABC):
     def smiles(self) -> List[str]: ...
 
     @property
+    def candidate_smiles(self) -> List[str]:
+        return [self.smiles[i] for i in self._unique_indices]
+
+    @property
     @abstractmethod
     def _candidates_path(self) -> Path: ...
 

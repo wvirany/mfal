@@ -111,3 +111,9 @@ class BOCheckpoint:
             torch.cuda.set_rng_state(data["cuda_rng_state"])
         print(f"Resuming {self.run_name} from iteration {len(data['history']['iteration'])}")
         return data["history"]
+
+    def peek_indices(self):
+        if not self.path.exists():
+            return None
+        data = torch.load(self.path)
+        return data["history"].get("indices", None)

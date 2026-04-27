@@ -16,11 +16,17 @@ def main(cfg: DictConfig):
 
     print(cfg.run_name)
 
+    # Create checkpoint class for saving / loading
+    checkpoint = BOCheckpoint(cfg) if cfg.bo.checkpoint else None
+
     # Instantiate dataset and oracle
+    indices = None
     dataset = instantiate(cfg.dataset) if cfg.get("dataset") else None
     if dataset is not None:
         n = cfg.get("n")
-        indices = torch.randperm(len(dataset.candidates))[:n] if n is not None else None
+        indices = checkpoint.peek_indices() if checkpoint is not None else None
+        if indices is None:
+            indices = torch.randperm(len(dataset.candidates))[:n] if n is not None else None
         oracle = oracle_from_dataset(
             dataset,
             column=cfg.oracle.column,
@@ -57,9 +63,6 @@ def main(cfg: DictConfig):
         n_top_k=getattr(oracle, "n_top_k", None),
     )
 
-    # Create checkpoint class for saving / loading
-    checkpoint = BOCheckpoint(cfg) if cfg.bo.checkpoint else None
-
     # Run
     bo = BOLoop(
         train_X,
@@ -70,6 +73,7 @@ def main(cfg: DictConfig):
         acqf_optimizer,
         candidates=candidates,
         observed_indices=observed_indices,
+        indices=indices,
         metrics=metrics,
         checkpoint=checkpoint,
         device=device,
