@@ -21,6 +21,6 @@ hydra:
       model: tanimoto_gp
       oracle: zinc250k/qed,zinc250k/jnk3
       seed: range(0,5)
-  launcher:
-    timeout_min: 120
-    max_num_timeout: 1
+  # launcher:
+  #   timeout_min: 120
+  #   max_num_timeout: 1
