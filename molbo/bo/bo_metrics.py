@@ -121,12 +121,13 @@ class BOMetrics:
         observed_indices = self.history["observed_indices"]
         n_iters = len(self.history["iteration"])
         q = len(y_obs) // n_iters
+        stride = max(1, n_iters // 100)  # For computing num modes on runs with many iters (small q)
 
         mode_curves = {f"num_modes_{self.threshold_labels[k]}": [] for k in self.thresholds}
         scaffold_curves = {f"num_scaffolds_{self.threshold_labels[k]}": [] for k in self.thresholds}
         seen_scaffolds = {k: set() for k in self.thresholds}
 
-        for i in range(q, len(y_obs) + 1, q):
+        for i in range(q, len(y_obs) + 1, q * stride):
             acq_indices = observed_indices[:i]
             acq_smiles = [self.smiles[idx] for idx in acq_indices]
             acq_scores = y_obs[:i]
