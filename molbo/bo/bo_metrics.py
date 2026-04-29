@@ -168,7 +168,7 @@ class BOMetrics:
                 scaffold_curves[f"num_scaffolds_{self.threshold_labels[k]}"].append(count)
 
             # Batch diversity - mean pairwise Tanimoto distance computed *per batch*
-            batch_indices = observed_indices[i - q * stride : i]
+            batch_indices = observed_indices[i - q : i]
             batch_smiles = [self.smiles[idx] for idx in batch_indices]
             diversity_curve.append(self._compute_batch_diversity(batch_smiles))
 
