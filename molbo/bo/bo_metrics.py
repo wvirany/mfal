@@ -4,7 +4,7 @@ from rdkit import Chem
 from rdkit.Chem import AllChem, DataStructs
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
-from molbo.utils.helpers import get_centroid_indices
+from molbo.utils.helpers import get_centroid_indices, smiles_to_morgan_fp
 
 # Values to log to WandB but skip in checkpointing
 HISTORY_SKIP = {"iteration", "acq_val", "time_per_iter", "model_loss"}
@@ -207,9 +207,10 @@ class BOMetrics:
     def _compute_batch_diversity(self, smiles):
         fps = []
         for smi in smiles:
-            mol = Chem.MolFromSmiles(smi)
-            if mol is not None:
-                fps.append(AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048))
+            try:
+                fps.append(smiles_to_morgan_fp(smi, as_tensor=False))
+            except ValueError:
+                continue
 
         if len(fps) < 2:
             return 0.0
