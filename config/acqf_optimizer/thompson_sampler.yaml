@@ -1,0 +1,4 @@
+_target_: molbo.acqf_optimizer.ThompsonSampler
+
+q: 1
+max_batch_size: 512

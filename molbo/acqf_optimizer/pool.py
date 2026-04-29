@@ -48,3 +48,35 @@ class PoolSampler(AcqfOptimizer):
         new_X = candidates[idx]
         acq_val = acq_values[idx]
         return new_X, acq_val, acq_values
+
+
+class ThompsonSampler(AcqfOptimizer):
+    def __init__(self, q: int = 1, max_batch_size: int = 1024):
+        self.q = q
+        self.max_batch_size = max_batch_size
+
+    def optimize(self, acq_func, candidates: torch.Tensor):
+        selected_X = []
+        selected_vals = []
+        remaining = candidates  # (N, d)
+
+        for _ in range(self.q):
+            acq_func.acq_func.redraw(batch_size=1)
+
+            with torch.no_grad():
+                acq_values = torch.cat(
+                    [
+                        acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
+                        for chunk in remaining.split(self.max_batch_size)
+                    ]
+                )
+
+            idx = acq_values.argmax()
+            selected_X.append(remaining[idx])
+            selected_vals.append(acq_values[idx])
+
+            mask = torch.ones(len(remaining), dtype=torch.bool)
+            mask[idx] = False
+            remaining = remaining[mask]
+
+        return torch.stack(selected_X), torch.stack(selected_vals), None
