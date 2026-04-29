@@ -3,7 +3,7 @@ submitit_folder: ${hydra.sweep.dir}/.submitit/%j
 max_num_timeout: 0
 array_parallelism: 64
 cpus_per_task: 4
-timeout_min: 1440
+timeout_min: 60
 mem_gb: 16
 setup:
   - module load python/3.11 rdkit/2024.09.6 cuda/12.6

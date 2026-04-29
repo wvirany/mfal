@@ -1,4 +1,7 @@
+import numpy as np
 import torch
+from rdkit import Chem
+from rdkit.Chem import AllChem, DataStructs
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
 from molbo.utils.helpers import get_centroid_indices
@@ -121,38 +124,38 @@ class BOMetrics:
         observed_indices = self.history["observed_indices"]
         n_iters = len(self.history["iteration"])
         q = len(y_obs) // n_iters
-        stride = max(1, n_iters // 100)  # For computing num modes on runs with many iters (small q)
+        stride = max(
+            1, n_iters // 100
+        )  # For reducing computations on runs with many iters (small q, large n)
 
         mode_curves = {f"num_modes_{self.threshold_labels[k]}": [] for k in self.thresholds}
         scaffold_curves = {f"num_scaffolds_{self.threshold_labels[k]}": [] for k in self.thresholds}
-        seen_scaffolds = {k: set() for k in self.thresholds}
+        diversity_curve = []
 
         for i in range(q, len(y_obs) + 1, q * stride):
             acq_indices = observed_indices[:i]
             acq_smiles = [self.smiles[idx] for idx in acq_indices]
             acq_scores = y_obs[:i]
 
-            # New batch only (for scaffolds and diversity)
-            batch_indices = observed_indices[i - q : i]
-            batch_smiles = [self.smiles[idx] for idx in batch_indices]
-            batch_scores = y_obs[i - q : i]
-
-            # Modes — full recompute on accumulated set
+            # Modes
             num_modes = self._compute_num_modes(acq_smiles, acq_scores)
             for k in self.thresholds:
                 mode_curves[f"num_modes_{self.threshold_labels[k]}"].append(num_modes[k])
 
-            # Scaffolds - computes incrementally in each batch given the entire set of seen scaffolds
+            # Scaffolds
             for k, threshold in self.thresholds.items():
                 above_threshold = [
-                    smi for smi, s in zip(batch_smiles, batch_scores) if s.item() >= threshold
+                    smi for smi, s in zip(acq_smiles, acq_scores) if s.item() >= threshold
                 ]
-                count, seen_scaffolds[k] = self._compute_num_scaffolds(
-                    above_threshold, seen_scaffolds[k]
-                )
+                count, _ = self._compute_num_scaffolds(above_threshold)
                 scaffold_curves[f"num_scaffolds_{self.threshold_labels[k]}"].append(count)
 
-        return {**mode_curves, **scaffold_curves}
+            # Batch diversity - mean pairwise Tanimoto distance computed *per batch*
+            batch_indices = observed_indices[i - q * stride : i]
+            batch_smiles = [self.smiles[idx] for idx in batch_indices]
+            diversity_curve.append(self._compute_batch_diversity(batch_smiles))
+
+        return {**mode_curves, **scaffold_curves, "batch_diversity": diversity_curve}
 
     def _compute_num_modes(self, smiles, scores):
         """
@@ -183,3 +186,20 @@ class BOMetrics:
                 continue
 
         return len(seen_scaffolds), seen_scaffolds
+
+    def _compute_batch_diversity(self, smiles):
+        fps = []
+        for smi in smiles:
+            mol = Chem.MolFromSmiles(smi)
+            if mol is not None:
+                fps.append(AllChem.GetMorganFingerprintAsBitVect(mol, radius=2, nBits=2048))
+
+        if len(fps) < 2:
+            return 0.0
+
+        sims = []
+        for i in range(len(fps)):
+            for j in range(i + 1, len(fps)):
+                sims.append(DataStructs.TanimotoSimilarity(fps[i], fps[j]))
+
+        return 1.0 - np.mean(sims)

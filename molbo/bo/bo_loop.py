@@ -55,6 +55,12 @@ class BOLoop:
             train_X = torch.cat([self.history["X_init"], self.history["X_observed"]]).to(device)
             train_y = torch.cat([self.history["y_init"], self.history["y_observed"]]).to(device)
             observed_indices = self.history["observed_indices"]
+            # Save indices and candidates SMILES in cases where they were not originally saved
+            # This is used for computing metrics on old runs
+            if "indices" not in self.history and indices is not None:
+                self.history["indices"] = indices
+            if "candidate_smiles" not in self.history and candidate_smiles is not None:
+                self.history["candidate_smiles"] = candidate_smiles
         else:
             self.history = {
                 "X_init": train_X.cpu(),
