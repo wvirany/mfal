@@ -60,6 +60,7 @@ class ThompsonSampler(AcqfOptimizer):
         selected_vals = []
         remaining = candidates  # (N, d)
 
+        acq_func.acq_func.batch_size = 1
         for _ in range(self.q):
             acq_func.acq_func.redraw(batch_size=1)
 
