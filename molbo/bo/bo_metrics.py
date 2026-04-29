@@ -39,7 +39,7 @@ class BOMetrics:
     def initialize(self, history):
         self.history = history
 
-    def update(self, iteration):
+    def update(self, iteration, all_acq_values=None):
         y_init = self.history["y_init"].reshape(-1)
         y_obs = self.history["y_observed"].reshape(-1)
         y = torch.cat([y_init, y_obs])
@@ -60,6 +60,18 @@ class BOMetrics:
             for k, threshold in self.thresholds.items():
                 rr = self._compute_retrieval_rate(y, threshold, self.n_top_k[k])
                 metrics_dict[f"retrieval_rate_{self.threshold_labels[k]}"] = rr[-1].item()
+
+        if all_acq_values is not None:
+            metrics_dict["acq_sparsity"] = self._compute_acq_sparsity(all_acq_values)
+
+        # Save to history
+        HISTORY_SKIP = {"iteration", "acq_val"}  # these are already saved in history, skip
+        for k, v in metrics_dict.items():
+            if k in HISTORY_SKIP:
+                continue
+            if k not in self.history:
+                self.history[k] = []
+            self.history[k].append(v)
 
         if self.logger is not None:
             self.logger.log(metrics_dict)
@@ -91,6 +103,9 @@ class BOMetrics:
         """Compute proportion of samples found above given threshold"""
         found = (y >= threshold).cumsum(dim=0)
         return found / n_top_k
+
+    def _compute_acq_sparsity(self, all_acq_values):
+        return 1 - (all_acq_values.mean() / all_acq_values.max()).item()
 
     def compute_metrics(self):
         """

@@ -16,7 +16,7 @@ class PoolMaximizer(AcqfOptimizer):
             choices=candidates,
             max_batch_size=self.max_batch_size,
         )
-        return new_X, acq_val
+        return new_X, acq_val, None
 
 
 class PoolSampler(AcqfOptimizer):
@@ -47,4 +47,4 @@ class PoolSampler(AcqfOptimizer):
         idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
         new_X = candidates[idx]
         acq_val = acq_values[idx]
-        return new_X, acq_val
+        return new_X, acq_val, acq_values

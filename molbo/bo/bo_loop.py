@@ -104,7 +104,7 @@ class BOLoop:
 
             # Pool-based
             if self.candidates is not None:
-                new_X, acq_val = self.acqf_optimizer.optimize(
+                new_X, acq_val, all_acq_values = self.acqf_optimizer.optimize(
                     self.acq_func, self.candidates[self.candidates_mask]
                 )
                 hash_idxs = [hash(x.cpu().numpy().tobytes()) for x in new_X]
@@ -115,7 +115,7 @@ class BOLoop:
                 self.candidates_mask[global_idxs] = False
             # Continuous / generative
             else:
-                new_X, acq_val = self.acqf_optimizer.optimize(self.acq_func)
+                new_X, acq_val, all_acq_values = self.acqf_optimizer.optimize(self.acq_func)
                 new_y = self.oracle(new_X)
 
             # Update dataset

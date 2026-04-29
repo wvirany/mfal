@@ -20,7 +20,7 @@ class ContinuousMaximizer(AcqfOptimizer):
             num_restarts=self.num_restarts,
             raw_samples=self.raw_samples,
         )
-        return new_X, acq_val
+        return new_X, acq_val, None
 
 
 class ContinuousSampler(AcqfOptimizer):
@@ -50,4 +50,4 @@ class ContinuousSampler(AcqfOptimizer):
         probs = acq_clamped / acq_clamped.sum()
 
         idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
-        return X_grid[idx], acq_values[idx]
+        return X_grid[idx], acq_values[idx], acq_values
