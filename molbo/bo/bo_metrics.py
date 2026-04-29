@@ -6,6 +6,9 @@ from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
 from molbo.utils.helpers import get_centroid_indices
 
+# Values to log to WandB but skip in checkpointing
+HISTORY_SKIP = {"iteration", "acq_val", "time_per_iter", "model_loss"}
+
 
 class BOMetrics:
     """
@@ -65,7 +68,6 @@ class BOMetrics:
             metrics_dict["acq_sparsity"] = self._compute_acq_sparsity(all_acq_values)
 
         # Save to history
-        HISTORY_SKIP = {"iteration", "acq_val"}  # these are already saved in history, skip
         for k, v in metrics_dict.items():
             if k in HISTORY_SKIP:
                 continue
