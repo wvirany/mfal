@@ -58,23 +58,23 @@ class ThompsonSampler(AcqfOptimizer):
     def optimize(self, acq_func, candidates: torch.Tensor):
         selected_X = []
         selected_vals = []
-        remaining = candidates  # (N, d)
+        remaining = candidates
 
-        acq_func.acq_func.batch_size = 1
         for _ in range(self.q):
-            acq_func.acq_func.redraw(batch_size=1)
+            means, stds = [], []
+            for chunk in remaining.split(self.max_batch_size):
+                with torch.no_grad():
+                    posterior = acq_func.model.model.posterior(chunk)
+                    means.append(posterior.mean.squeeze(-1))
+                    stds.append(posterior.variance.squeeze(-1).sqrt())
 
-            with torch.no_grad():
-                acq_values = torch.cat(
-                    [
-                        acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
-                        for chunk in remaining.split(self.max_batch_size)
-                    ]
-                )
+            mean = torch.cat(means)
+            std = torch.cat(stds)
+            sample = mean + std * torch.randn_like(mean)
 
-            idx = acq_values.argmax()
+            idx = sample.argmax()
             selected_X.append(remaining[idx])
-            selected_vals.append(acq_values[idx])
+            selected_vals.append(sample[idx])
 
             mask = torch.ones(len(remaining), dtype=torch.bool)
             mask[idx] = False
