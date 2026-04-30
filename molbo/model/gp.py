@@ -125,3 +125,15 @@ class TanimotoGPModel(GPModel):
 
         if state_dict is not None:
             self.model.load_state_dict(state_dict)
+
+
+class RewardShapedTanimotoGP(TanimotoGPModel):
+    """TanimotoGP with reward shaping: currently fits GP on train_y ^ beta"""
+
+    def __init__(self, beta: float = 1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.beta = beta
+
+    def initialize(self, train_X, train_y, state_dict=None):
+        super().initialize(train_X, train_y**self.beta, state_dict)
+        self.train_y = train_y  # restore clean oracle values

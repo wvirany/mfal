@@ -1,0 +1,2 @@
+_target_: molbo.model.RewardShapedTanimotoGP
+beta: 1.0
