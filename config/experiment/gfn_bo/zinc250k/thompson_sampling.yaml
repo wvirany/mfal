@@ -7,7 +7,7 @@ bo:
   n_iters: 1000
   checkpoint: true
 
-run_name: "${hydra:runtime.choices.acqf_optimizer}_${hydra:runtime.choices.acquisition}_${hydra:runtime.choices.oracle}"
+run_name: "${hydra:runtime.choices.acqf_optimizer}_${hydra:runtime.choices.acquisition}_${hydra:runtime.choices.oracle}_q${acqf_optimizer.q}"
 n: 50000
 
 hydra:
