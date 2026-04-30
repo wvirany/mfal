@@ -16,8 +16,8 @@ hydra:
   sweeper:
     params:
       dataset: zinc250k
-      acquisition: ts
-      acqf_optimizer: thompson_sampler
+      acquisition: qpo
+      acqf_optimizer: pool_sampler
       acqf_optimizer.q: 1,5,10,25,50,100
       acqf_optimizer.max_batch_size: 512
       model: tanimoto_gp

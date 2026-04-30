@@ -1,12 +1,14 @@
 import hydra
 import torch
 from hydra.utils import instantiate
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 from molbo.bo import BOLoop, BOMetrics
 from molbo.oracle.factory import oracle_from_dataset
 from molbo.utils import sample_init
 from molbo.utils.logger import BOCheckpoint, WandBLogger
+
+OmegaConf.register_new_resolver("div", lambda a, b: int(a) // int(b))
 
 
 @hydra.main(config_path="config", config_name="config", version_base="1.3")
@@ -49,6 +51,7 @@ def main(cfg: DictConfig):
     acqf_optimizer = instantiate(cfg.acqf_optimizer)
     acqf_optimizer.bounds = getattr(oracle, "bounds", None)
     acq_func = instantiate(cfg.acquisition)
+    acq_func.candidates = candidates
     model = instantiate(cfg.model)
 
     logger = WandBLogger.init_from_cfg(cfg)
