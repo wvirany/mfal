@@ -154,7 +154,8 @@ class ProbabilityOfOptimality(Acquisition):
         a = y1 - b * c1
 
         u_samples = torch.rand(self.n_samples)
-        return a - b * torch.log(-torch.log(u_samples))
+        taus = a - b * torch.log(-torch.log(u_samples))
+        return taus.to(mean.device)
 
     def __call__(self, X):
         # X: (batch, 1, d) from PoolSampler

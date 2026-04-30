@@ -4,8 +4,9 @@ wandb:
   experiment: gfn_bo_zinc250k
 
 bo:
-  n_iters: 1000
+  n_iters: ${div:1000,${acqf_optimizer.q}}
   checkpoint: true
+  checkpoint_freq: ${div:100,${acqf_optimizer.q}}
 
 run_name: "${hydra:runtime.choices.acqf_optimizer}_${hydra:runtime.choices.acquisition}_${hydra:runtime.choices.oracle}_beta${model.beta}_q${acqf_optimizer.q}"
 n: 50000
