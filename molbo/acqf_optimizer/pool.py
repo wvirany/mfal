@@ -44,7 +44,15 @@ class PoolSampler(AcqfOptimizer):
         acq_clamped = acq_values.clamp(min=0)
         probs = acq_clamped / acq_clamped.sum()
 
-        idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
+        n_nonzero = (probs > 0).sum().item()
+        if n_nonzero < self.q:
+            print(
+                f"Warning: only {n_nonzero} non-zero probability candidates, falling back to replacement sampling"
+            )
+            idx = torch.multinomial(probs, num_samples=self.q, replacement=True)
+        else:
+            idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
+
         new_X = candidates[idx]
         acq_val = acq_values[idx]
         return new_X, acq_val, acq_values

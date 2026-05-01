@@ -18,7 +18,10 @@ hydra:
       acquisition: ei,ucb,ucb_beta_0.1,posterior_mean
       acqf_optimizer: pool_sampler
       acqf_optimizer.q: 50, 100, 250, 500
-      acqf_optimizer.max_batch_size: 512
+      acqf_optimizer.max_batch_size: 256
       model: tanimoto_gp
       oracle: tiny_lib/seh,tiny_lib/jnk3,tiny_lib/gsk3b
       seed: range(0,5)
+  launcher:
+    timeout_min: 60
+    max_num_timeout: 0
