@@ -66,6 +66,7 @@ class BOMetrics:
 
         if all_acq_values is not None:
             metrics_dict["acq_sparsity"] = self._compute_acq_sparsity(all_acq_values)
+            metrics_dict["acq_entropy"] = self._compute_acq_entropy(all_acq_values)
 
         # Save to history
         for k, v in metrics_dict.items():
@@ -108,6 +109,12 @@ class BOMetrics:
 
     def _compute_acq_sparsity(self, all_acq_values):
         return 1 - (all_acq_values.mean() / all_acq_values.max()).item()
+
+    def _compute_acq_entropy(self, all_acq_values):
+        shifted = all_acq_values - all_acq_values.min()
+        probs = shifted / shifted.sum()
+        entropy = -(probs * torch.log(probs + 1e-10)).sum()
+        return entropy.item()
 
     def compute_metrics(self):
         """
