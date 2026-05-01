@@ -5,6 +5,7 @@ from botorch.acquisition.analytic import (
     ExpectedImprovement,
     LogExpectedImprovement,
     LogProbabilityOfImprovement,
+    PosteriorMean,
     ProbabilityOfImprovement,
     UpperConfidenceBound,
 )
@@ -72,6 +73,14 @@ class UCBAcquisition(Acquisition):
     def update(self, model: SurrogateModel):
         self.model = model
         self.acq_func = UpperConfidenceBound(model=model.model, beta=self.beta)
+
+
+class PosteriorMeanAcquisition(Acquisition):
+    """Posterior mean acquisition function."""
+
+    def update(self, model: SurrogateModel):
+        self.model = model
+        self.acq_func = PosteriorMean(model=model.model)
 
 
 class TSAcquisition(Acquisition):

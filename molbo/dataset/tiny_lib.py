@@ -14,7 +14,13 @@ class TinyLibraryDataset(Dataset):
     def __init__(self, path: str = DATA_DIR / "properties_30k.csv"):
         df = pd.read_csv(path)
         self._smiles = df["smiles"].tolist()
-        self._columns = {"qed": torch.tensor(df["qed"].values, dtype=torch.float64)}
+        self._columns = {
+            "qed": torch.tensor(df["qed"].values, dtype=torch.float64),
+            "seh": torch.tensor(df["seh"].values, dtype=torch.float64),
+            "jnk3": torch.tensor(df["jnk3"].values, dtype=torch.float64),
+            "gsk3b": torch.tensor(df["gsk3b"].values, dtype=torch.float64),
+            "drd2": torch.tensor(df["drd2"].values, dtype=torch.float64),
+        }
 
         # SMILES and columns must be set before initializing base Dataset class
         super().__init__()
