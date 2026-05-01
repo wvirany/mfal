@@ -22,6 +22,3 @@ hydra:
       model: tanimoto_gp
       oracle: tiny_lib/seh,tiny_lib/jnk3,tiny_lib/gsk3b
       seed: range(0,5)
-  launcher:
-    timeout_min: 60
-    max_num_timeout: 0
