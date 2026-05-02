@@ -3,7 +3,7 @@ from botorch.acquisition.monte_carlo import qExpectedImprovement, qUpperConfiden
 from botorch.sampling.normal import SobolQMCNormalSampler
 
 from molbo.acquisition import Acquisition
-from molbo.model import SurrogateModel
+from molbo.model.base import SurrogateModel
 
 
 class qEIAcquisition(Acquisition):
