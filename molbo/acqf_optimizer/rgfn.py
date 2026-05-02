@@ -10,6 +10,7 @@ from rgfn.gfns.reaction_gfn.policies.reaction_forward_policy import ReactionForw
 from rgfn.gfns.reaction_gfn.proxies.path_cost_proxy import PathCostProxy
 from rgfn.gfns.reaction_gfn.reaction_env import ReactionEnv
 from rgfn.shared.objectives.trajectory_balance_objective import TrajectoryBalanceObjective
+from rgfn.shared.policies.uniform_policy import UniformPolicy
 from rgfn.shared.replay_buffers.reward_prioritized_replay_buffer import (
     RewardPrioritizedReplayBuffer,
 )
@@ -18,7 +19,7 @@ from rgfn.trainer.logger.dummy_logger import DummyLogger
 from rgfn.trainer.optimizers.trajectory_balance_optimizer import TrajectoryBalanceOptimizer
 from rgfn.trainer.trainer import Trainer
 
-from molbo.acqf_optimizer import AcqfOptimizer
+from molbo.acqf_optimizer import AcqfOptimizer, Initialization, OptimizationResult
 from molbo.utils import smiles_to_morgan_fp
 
 
@@ -81,11 +82,13 @@ class RGFN(AcqfOptimizer):
 
     def __init__(
         self,
-        reaction_path: str,
-        fragment_path: str,
-        M: int,
-        q: int,
-        n_iterations: int,
+        reaction_path: str = "data/rgfn/templates_tiny.txt",
+        fragment_path: str = "data/rgfn/fragments_tiny.txt",
+        M: int = 100,
+        q: int = 100,
+        n_iterations: int = 250,
+        train_forward_n_trajectories: int = 64,
+        train_replay_n_trajectories: int = 32,
         run_dir: str = "./tmp_rgfn",
     ):
         self.M = M
@@ -150,9 +153,9 @@ class RGFN(AcqfOptimizer):
             logger=DummyLogger(),
             train_forward_sampler=self.forward_sampler,
             train_replay_buffer=replay_buffer,
-            train_forward_n_trajectories=64,
+            train_forward_n_trajectories=train_forward_n_trajectories,
             train_backward_n_trajectories=0,
-            train_replay_n_trajectories=32,
+            train_replay_n_trajectories=train_replay_n_trajectories,
             objective=objective,
             optimizer=optimizer,
             n_iterations=n_iterations,
@@ -194,4 +197,33 @@ class RGFN(AcqfOptimizer):
         new_X = X[top_q.indices]
         acq_val = top_q.values
 
-        return new_X, acq_val, None
+        return OptimizationResult(new_X=new_X, acq_val=acq_val, smiles=smiles)
+
+    def sample_init(self, oracle, n_init: int) -> Initialization:
+        uniform_sampler = RandomSampler(
+            env=self.forward_sampler.env,
+            policy=UniformPolicy(),
+            reward=None,
+        )
+
+        sampled_states = []
+        sampled_smiles = set()
+        while len(sampled_states) < n_init:
+            trajectories = uniform_sampler.sample_trajectories_batch(
+                n_total_trajectories=n_init - len(sampled_states),
+                batch_size=n_init - len(sampled_states),
+            )
+            terminal_states = trajectories.get_last_states_flat()
+            for state in terminal_states:
+                if (
+                    not isinstance(state, ReactionStateEarlyTerminal)
+                    and state.molecule.smiles not in sampled_smiles
+                ):
+                    sampled_states.append(state)
+                    sampled_smiles.add(state.molecule.smiles)
+
+        smiles = [s.molecule.smiles for s in sampled_states]
+        train_X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])
+        train_y = oracle(smiles)
+
+        return Initialization(train_X=train_X, train_y=train_y, smiles=smiles)

@@ -1,10 +1,21 @@
 import torch
 from botorch.optim import optimize_acqf
 
-from molbo.acqf_optimizer.base import AcqfOptimizer
+from molbo.acqf_optimizer.base import AcqfOptimizer, Initialization, OptimizationResult
 
 
-class ContinuousMaximizer(AcqfOptimizer):
+class ContinuousBase(AcqfOptimizer):
+
+    def sample_init(self, oracle, n_init: int) -> Initialization:
+        bounds = oracle.bounds
+        train_X = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(
+            n_init, bounds.shape[1], dtype=torch.float64
+        )
+        train_y = oracle(train_X)
+        return Initialization(train_X=train_X, train_y=train_y)
+
+
+class ContinuousMaximizer(ContinuousBase):
     def __init__(self, q: int = 1, num_restarts: int = 5, raw_samples: int = 20):
         self.q = q
         self.num_restarts = num_restarts
@@ -20,10 +31,10 @@ class ContinuousMaximizer(AcqfOptimizer):
             num_restarts=self.num_restarts,
             raw_samples=self.raw_samples,
         )
-        return new_X, acq_val, None
+        return OptimizationResult(new_X=new_X, acq_val=acq_val)
 
 
-class ContinuousSampler(AcqfOptimizer):
+class ContinuousSampler(ContinuousBase):
     def __init__(self, q: int = 1, n_samples: int = 1000):
         self.q = q
         self.n_samples = n_samples
@@ -50,4 +61,4 @@ class ContinuousSampler(AcqfOptimizer):
         probs = acq_clamped / acq_clamped.sum()
 
         idx = torch.multinomial(probs, num_samples=self.q, replacement=False)
-        return X_grid[idx], acq_values[idx], acq_values
+        return OptimizationResult(new_X=X_grid[idx], acq_val=acq_values[idx])

@@ -5,7 +5,6 @@ from omegaconf import DictConfig, OmegaConf
 
 from molbo.bo import BOLoop, BOMetrics
 from molbo.oracle.factory import oracle_from_dataset
-from molbo.utils import sample_init
 from molbo.utils.logger import BOCheckpoint, WandBLogger
 
 OmegaConf.register_new_resolver("div", lambda a, b: int(a) // int(b))
@@ -57,11 +56,9 @@ def main(cfg: DictConfig):
     logger = WandBLogger.init_from_cfg(cfg)
 
     # Init data
-    train_X, train_y, observed_indices = sample_init(
-        oracle, n_init=cfg.bo.n_init, candidates=candidates
-    )
+    init = acqf_optimizer.sample_init(oracle, n_init=cfg.bo.n_init)
 
-    print("Initial dataset size:", len(train_X))
+    print("Initial dataset size:", len(init.train_X))
 
     # Class for computing metrics; top_k_threshold and n_top_k provided by LookupOracle
     metrics = BOMetrics(
@@ -75,14 +72,14 @@ def main(cfg: DictConfig):
 
     # Run
     bo = BOLoop(
-        train_X,
-        train_y,
+        init.train_X,
+        init.train_y,
         model,
         acq_func,
         oracle,
         acqf_optimizer,
         candidates=candidates,
-        observed_indices=observed_indices,
+        observed_indices=init.observed_indices,
         indices=indices,
         candidate_smiles=candidate_smiles,
         metrics=metrics,

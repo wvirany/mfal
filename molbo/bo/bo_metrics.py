@@ -55,9 +55,11 @@ class BOMetrics:
             "model_loss": self.history["model_loss"][-1],
             "best_observed": self._compute_best_observed(y)[-1].item(),
             "top10_mean": self._compute_topk_mean(y, k=10)[-1].item(),
-            "simple_regret": self._compute_simple_regret(y)[-1].item(),
-            "cumulative_regret": self._compute_cumulative_regret(y)[-1].item(),
         }
+
+        if self.f_max is not None:
+            metrics_dict["simple_regret"] = self._compute_simple_regret(y)[-1].item()
+            metrics_dict["cumulative_regret"] = self._compute_cumulative_regret(y)[-1].item()
 
         if self.thresholds is not None:
             for k, threshold in self.thresholds.items():

@@ -95,7 +95,9 @@ class BOLoop:
 
     def run(self, n_iters):
 
-        for i in tqdm(range(self.start_iteration, n_iters), desc="BO", unit="iter"):
+        for i in tqdm(
+            range(self.start_iteration, n_iters), desc="BO", unit="iter", position=0, leave=True
+        ):
             iter_start = time.time()
 
             # Update model and acquisition function
@@ -104,10 +106,10 @@ class BOLoop:
 
             # Pool-based
             if self.candidates is not None:
-                new_X, acq_val, all_acq_values = self.acqf_optimizer.optimize(
+                result = self.acqf_optimizer.optimize(
                     self.acq_func, self.candidates[self.candidates_mask]
                 )
-                hash_idxs = [hash(x.cpu().numpy().tobytes()) for x in new_X]
+                hash_idxs = [hash(x.cpu().numpy().tobytes()) for x in result.new_X]
                 global_idxs = [self.oracle._hash_to_idx[h] for h in hash_idxs]
                 new_y = self.oracle[global_idxs][1]
                 if new_y.dim() == 1:
@@ -115,16 +117,19 @@ class BOLoop:
                 self.candidates_mask[global_idxs] = False
             # Continuous / generative
             else:
-                new_X, acq_val, all_acq_values = self.acqf_optimizer.optimize(self.acq_func)
-                new_y = self.oracle(new_X)
+                result = self.acqf_optimizer.optimize(self.acq_func)
+                if result.smiles is not None:
+                    new_y = self.oracle(result.smiles)
+                else:
+                    new_y = self.oracle(result.new_X)
 
             # Update dataset
-            self.model.update(new_X, new_y)
+            self.model.update(result.new_X, new_y)
 
             # Track BO loop history
             self.history["time_per_iter"].append(time.time() - iter_start)
             self.history["X_observed"] = torch.cat(
-                (self.history["X_observed"], new_X.detach().cpu())
+                (self.history["X_observed"], result.new_X.detach().cpu())
             )
             self.history["y_observed"] = torch.cat(
                 (self.history["y_observed"], new_y.detach().cpu())
@@ -132,7 +137,7 @@ class BOLoop:
             if self.candidates is not None:
                 self.history["observed_indices"].extend(global_idxs)
             self.history["iteration"].append(i)
-            self.history["acq_vals"].extend(acq_val.reshape(-1).tolist())
+            self.history["acq_vals"].extend(result.acq_val.reshape(-1).tolist())
             self.history["model_loss"].append(self.model.loss().item())
 
             # Save checkpoint
@@ -141,7 +146,7 @@ class BOLoop:
 
             # Update metrics
             if self.metrics is not None:
-                self.metrics.update(i, all_acq_values=all_acq_values)
+                self.metrics.update(i, all_acq_values=result.all_acq_values)
 
         if self.candidates is not None and self.metrics is not None:
             self.history["batch_metrics"] = self.metrics.compute_batch_metrics()

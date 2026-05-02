@@ -1,31 +1,47 @@
-"""
-Named oracle constructors for known molecular datasets.
+from abc import abstractmethod
+from typing import List, Optional
 
-These thin wrappers exist for Hydra config compatibility — Hydra requires a single
-callable _target_, so we can't express oracle_from_dataset() with a nested dataset
-object cleanly in YAML. These functions delegate to oracle_from_dataset() internally
-and are the config-facing API for datasets.
-"""
+import torch
+from rdkit.Chem import QED, MolFromSmiles
 
-from molbo.dataset import Mcl1Dataset, TinyLibraryDataset
-from molbo.oracle.factory import oracle_from_dataset
+from molbo.oracle.base import Oracle
 
 
-def mcl1_qed(noise_std: float = 0.0, n: int = None):
-    dataset = Mcl1Dataset()
-    return oracle_from_dataset(dataset, column="qed", noise_std=noise_std, n=n)
+class MolecularOracle(Oracle):
+    """
+    Oracle that evaluates molecules directly from SMILES strings.
+    """
+
+    def __init__(self, noise_std: float = 0.0, optimal_value: Optional[float] = None):
+        super().__init__(noise_std)
+        self._optimal_value = optimal_value
+
+    @abstractmethod
+    def _evaluate(self, smiles: List[str]) -> torch.Tensor:
+        """
+        Args:
+            smiles: List of N SMILES strings
+        Returns:
+            y: (N, 1) float64 tensor
+        """
+        pass
+
+    @property
+    def optimal_value(self):
+        return self._optimal_value
+
+    def to(self, device):
+        return self
 
 
-def mcl1_vina(noise_std: float = 0.0, n: int = None):
-    dataset = Mcl1Dataset()
-    return oracle_from_dataset(dataset, column="vina", negate=True, noise_std=noise_std, n=n)
+class QEDOracle(MolecularOracle):
 
+    def __init__(self, noise_std: float = 0.0):
+        super().__init__(noise_std=noise_std, optimal_value=1.0)
 
-def mcl1_mmgbsa(noise_std: float = 0.0, n: int = None):
-    dataset = Mcl1Dataset()
-    return oracle_from_dataset(dataset, column="mmgbsa", negate=True, noise_std=noise_std, n=n)
-
-
-def tiny_lib_qed(noise_std: float = 0.0, n: int = None):
-    dataset = TinyLibraryDataset()
-    return oracle_from_dataset(dataset, column="qed", noise_std=noise_std, n=n)
+    def _evaluate(self, smiles: List[str]) -> torch.Tensor:
+        scores = []
+        for smi in smiles:
+            mol = MolFromSmiles(smi)
+            scores.append(QED.qed(mol) if mol is not None else 0.0)
+        return torch.tensor(scores, dtype=torch.float64).unsqueeze(-1)
