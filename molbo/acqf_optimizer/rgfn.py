@@ -329,7 +329,7 @@ class RGFNPoolSampler(RGFN):
         if frac_in_pool < 1.0:
             print(f"Warning: {n_out_of_pool}/{n_total_sampled} GFN samples were out-of-pool")
 
-        X = torch.stack(collected_X)  # (M, 2048)
+        X = torch.stack(collected_X).to(candidates.device)  # (M, 2048)
 
         # Evaluate acq over M candidates and select top-q
         with torch.no_grad():
