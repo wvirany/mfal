@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import torch
 from rgfn.api.proxy_base import ProxyBase, ProxyOutput
 from rgfn.api.reward import Reward
@@ -21,6 +23,8 @@ from rgfn.trainer.trainer import Trainer
 
 from molbo.acqf_optimizer import AcqfOptimizer, Initialization, OptimizationResult
 from molbo.utils import smiles_to_morgan_fp
+
+_RGFN_DATA = Path(__file__).parent.parent.parent / "data" / "rgfn"
 
 
 def _compute_js_divergence(p: torch.Tensor, q: torch.Tensor) -> float:
@@ -53,12 +57,19 @@ class AcquisitionProxy(ProxyBase):
         valid_mask = [not isinstance(s, ReactionStateEarlyTerminal) for s in states]
         valid_states = [s for s, v in zip(states, valid_mask) if v]
 
+        if not valid_states:
+            return ProxyOutput(value=torch.zeros(len(states), dtype=torch.float32), components=None)
+
         smiles = [s.molecule.smiles for s in valid_states]
         X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])  # (n, 2048)
         X = X.reshape(-1, 1, X.shape[-1])  # (n, 1, 2048) for BoTorch
 
         with torch.no_grad():
             acq_values = self.acq_func(X).float()  # (n,)
+
+        if torch.isnan(acq_values).any():
+            print("Warning: NaN acquisition values detected, replacing with zeros")
+            acq_values = torch.nan_to_num(acq_values, nan=0.0)
 
         result = torch.zeros(len(states), dtype=torch.float32)
         result[torch.tensor(valid_mask)] = acq_values
@@ -90,8 +101,8 @@ class RGFN(AcqfOptimizer):
 
     def __init__(
         self,
-        reaction_path: str = "data/rgfn/templates_tiny.txt",
-        fragment_path: str = "data/rgfn/fragments_tiny.txt",
+        reaction_path: str = str(_RGFN_DATA / "templates_30k.txt"),
+        fragment_path: str = str(_RGFN_DATA / "fragments_30k.txt"),
         M: int = 100,
         q: int = 100,
         n_iterations: int = 250,
@@ -118,7 +129,7 @@ class RGFN(AcqfOptimizer):
         env = ReactionEnv(data_factory=data_factory, max_num_reactions=3)
 
         self.proxy = AcquisitionProxy()
-        reward = Reward(proxy=self.proxy, reward_boosting="exponential", beta=32, min_reward=1e-8)
+        reward = Reward(proxy=self.proxy, min_reward=1e-8)
 
         action_embedding_fn = FragmentFingerprintEmbedding(
             data_factory=data_factory,
@@ -350,4 +361,38 @@ class RGFNPoolSampler(RGFN):
                 "js_divergence": js,
                 "frac_in_pool": frac_in_pool,
             },
+        )
+
+    def sample_init(self, oracle, n_init: int) -> Initialization:
+        uniform_sampler = RandomSampler(
+            env=self.forward_sampler.env,
+            policy=UniformPolicy(),
+            reward=None,
+        )
+
+        sampled_states = []
+        sampled_smiles = set()
+        while len(sampled_states) < n_init:
+            trajectories = uniform_sampler.sample_trajectories_batch(
+                n_total_trajectories=n_init - len(sampled_states),
+                batch_size=n_init - len(sampled_states),
+            )
+            for state in trajectories.get_last_states_flat():
+                if (
+                    not isinstance(state, ReactionStateEarlyTerminal)
+                    and state.molecule.smiles not in sampled_smiles
+                ):
+                    sampled_states.append(state)
+                    sampled_smiles.add(state.molecule.smiles)
+
+        smiles = [s.molecule.smiles for s in sampled_states]
+        train_X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])
+        train_y = oracle(train_X)
+        observed_indices = [oracle._hash_to_idx[hash(row.numpy().tobytes())] for row in train_X]
+
+        return Initialization(
+            train_X=train_X,
+            train_y=train_y,
+            smiles=smiles,
+            observed_indices=observed_indices,
         )
