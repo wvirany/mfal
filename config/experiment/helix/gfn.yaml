@@ -1,0 +1,33 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: helix
+
+bo:
+  n_iters: 20
+  checkpoint: true
+  checkpoint_freq: 1
+
+run_name: "${hydra:runtime.choices.acquisition}_${hydra:runtime.choices.oracle}_${model.beta}"
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      dataset: tiny_lib
+      acquisition: ei,posterior_mean
+      acqf_optimizer: rgfn_pool_sampler
+      acqf_optimizer.q: 50
+      acqf_optimizer.M: 50
+      acqf_optimizer.n_iterations: 200
+      acqf_optimizer.max_batch_size: 256
+      model: reward_shaped_tanimoto_gp
+      model.beta: 1,2,4,8
+      oracle: tiny_lib/jnk3
+      seed: range(0,5)
+  launcher:
+    timeout_min: 180
+    setup:
+      - module load python/3.11 rdkit/2024.09.6 cuda/12.6
+      - source ~/scratch/molbo/venv_rgfn/bin/activate
+    array_parallelism: 5
