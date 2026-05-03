@@ -121,7 +121,7 @@ class BOLoop:
                 if result.smiles is not None:
                     new_y = self.oracle(result.smiles)
                 else:
-                    new_y = self.oracle(result.new_X)
+                    new_y = self.oracle(result.new_X).to(self.device)
 
             # Update dataset
             self.model.update(result.new_X, new_y)
