@@ -63,7 +63,7 @@ class AcquisitionProxy(ProxyBase):
 
         smiles = [s.molecule.smiles for s in valid_states]
         X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])  # (n, 2048)
-        X = X.reshape(-1, 1, X.shape[-1])  # (n, 1, 2048) for BoTorch
+        X = X.reshape(-1, 1, X.shape[-1]).to(self.device)  # (n, 1, 2048) for BoTorch
 
         with torch.no_grad():
             acq_values = self.acq_func(X).float()  # (n,)

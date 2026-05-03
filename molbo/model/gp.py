@@ -113,9 +113,6 @@ class TanimotoGPModel(GPModel):
         self.train_X = train_X
         self.train_y = train_y
 
-        print(train_X.device)
-        print(train_y.device)
-
         self.model = TanimotoGP(
             train_X,
             train_y,
