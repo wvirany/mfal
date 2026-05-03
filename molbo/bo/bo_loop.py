@@ -45,6 +45,9 @@ class BOLoop:
         self.oracle = oracle
         self.acqf_optimizer = acqf_optimizer
 
+        print("model type:", type(model))
+        print("train_X device:", train_X.device)
+
         # Initialize from checkpoint if it exists
         self.checkpoint = checkpoint
         loaded_history = self.checkpoint.load() if self.checkpoint is not None else None
