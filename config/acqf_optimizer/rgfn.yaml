@@ -1,4 +1,4 @@
-_target_: molbo.acqf_optimizer.RGFN
+_target_: molbo.acqf_optimizer.rgfn.RGFN
 
 M: 100
 q: 100
