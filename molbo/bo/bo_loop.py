@@ -146,7 +146,7 @@ class BOLoop:
 
             # Update metrics
             if self.metrics is not None:
-                self.metrics.update(i, all_acq_values=result.all_acq_values)
+                self.metrics.update(i, extra_metrics=result.metrics)
 
         if self.candidates is not None and self.metrics is not None:
             self.history["batch_metrics"] = self.metrics.compute_batch_metrics()

@@ -42,7 +42,7 @@ class BOMetrics:
     def initialize(self, history):
         self.history = history
 
-    def update(self, iteration, all_acq_values=None):
+    def update(self, iteration, extra_metrics=None):
         y_init = self.history["y_init"].reshape(-1)
         y_obs = self.history["y_observed"].reshape(-1)
         y = torch.cat([y_init, y_obs])
@@ -66,9 +66,8 @@ class BOMetrics:
                 rr = self._compute_retrieval_rate(y, threshold, self.n_top_k[k])
                 metrics_dict[f"retrieval_rate_{self.threshold_labels[k]}"] = rr[-1].item()
 
-        if all_acq_values is not None:
-            metrics_dict["acq_sparsity"] = self._compute_acq_sparsity(all_acq_values)
-            metrics_dict["acq_entropy"] = self._compute_acq_entropy(all_acq_values)
+        if extra_metrics is not None:
+            metrics_dict.update(extra_metrics)
 
         # Save to history
         for k, v in metrics_dict.items():
@@ -108,15 +107,6 @@ class BOMetrics:
         """Compute proportion of samples found above given threshold"""
         found = (y >= threshold).cumsum(dim=0)
         return found / n_top_k
-
-    def _compute_acq_sparsity(self, all_acq_values):
-        return 1 - (all_acq_values.mean() / all_acq_values.max()).item()
-
-    def _compute_acq_entropy(self, all_acq_values):
-        shifted = all_acq_values - all_acq_values.min()
-        probs = shifted / shifted.sum()
-        entropy = -(probs * torch.log(probs + 1e-10)).sum()
-        return entropy.item()
 
     def compute_metrics(self):
         """

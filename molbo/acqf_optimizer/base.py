@@ -19,8 +19,8 @@ class Initialization:
 class OptimizationResult:
     new_X: torch.Tensor
     acq_val: torch.Tensor
-    smiles: Optional[List[str]] = None  # Used for MolecularOracle
-    all_acq_values: Optional[torch.Tensor] = None  # Returned by PoolSampler for metrics
+    smiles: Optional[List[str]] = None
+    metrics: dict = field(default_factory=dict)
 
 
 class AcqfOptimizer(ABC):
