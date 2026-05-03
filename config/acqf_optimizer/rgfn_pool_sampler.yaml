@@ -1,4 +1,4 @@
-_target_: molbo.acqf_optimizer.RGFNPoolSampler
+_target_: molbo.acqf_optimizer.rgfn.RGFNPoolSampler
 
 M: 100
 q: 100
