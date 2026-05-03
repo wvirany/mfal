@@ -44,6 +44,7 @@ class BOLoop:
         self.acq_func = acq_func
         self.oracle = oracle
         self.acqf_optimizer = acqf_optimizer
+        self.device = device
 
         # Initialize from checkpoint if it exists
         self.checkpoint = checkpoint
