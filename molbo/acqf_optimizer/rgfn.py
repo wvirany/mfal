@@ -335,6 +335,9 @@ class RGFNPoolSampler(RGFN):
         X = torch.stack(collected_X).to(candidates.device)
         print("X device:", X.device)
 
+        print("model device:", next(self.forward_sampler.policy.parameters()).device)
+        print("GP device:", next(acq_func.model.model.parameters()).device)
+
         # Evaluate acq over M candidates and select top-q
         with torch.no_grad():
             acq_values = acq_func(X.reshape(-1, 1, X.shape[-1]))  # (M,)
