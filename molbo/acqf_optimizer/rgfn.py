@@ -44,6 +44,7 @@ class AcquisitionProxy(ProxyBase):
     def __init__(self):
         super().__init__()
         self.acq_func = None
+        self.device = "cpu"
 
     def update(self, acq_func):
         self.acq_func = acq_func
@@ -71,7 +72,7 @@ class AcquisitionProxy(ProxyBase):
             print("Warning: NaN acquisition values detected, replacing with zeros")
             acq_values = torch.nan_to_num(acq_values, nan=0.0)
 
-        result = torch.zeros(len(states), dtype=torch.float32)
+        result = torch.zeros(len(states), dtype=torch.float32, device=self.device)
         result[torch.tensor(valid_mask)] = acq_values
 
         return ProxyOutput(value=result, components=None)
@@ -129,6 +130,7 @@ class RGFN(AcqfOptimizer):
         env = ReactionEnv(data_factory=data_factory, max_num_reactions=3)
 
         self.proxy = AcquisitionProxy()
+        self.proxy.device = device
         reward = Reward(proxy=self.proxy, min_reward=1e-8)
 
         action_embedding_fn = FragmentFingerprintEmbedding(
