@@ -57,8 +57,8 @@ def main(cfg: DictConfig):
 
     # Init data
     init = acqf_optimizer.sample_init(oracle, n_init=cfg.bo.n_init)
-    init.train_X.to(device)
-    init.train_y.to(device)
+    init.train_X = init.train_X.to(device)
+    init.train_y = init.train_y.to(device)
 
     print("Initial dataset size:", len(init.train_X))
 
