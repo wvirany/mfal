@@ -120,7 +120,7 @@ class BOLoop:
             else:
                 result = self.acqf_optimizer.optimize(self.acq_func)
                 if result.smiles is not None:
-                    new_y = self.oracle(result.smiles)
+                    new_y = self.oracle(result.smiles).to(self.device)
                 else:
                     new_y = self.oracle(result.new_X).to(self.device)
 
