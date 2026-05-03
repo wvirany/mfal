@@ -357,7 +357,7 @@ class RGFNPoolSampler(RGFN):
         true_acq = true_acq.clamp(min=0)
         true_dist = true_acq / true_acq.sum()
 
-        gfn_counts = torch.zeros(len(candidates))
+        gfn_counts = torch.zeros(len(candidates), device=candidates.device)
         for idx in collected_idx:
             gfn_counts[idx] += 1
         gfn_dist = gfn_counts / gfn_counts.sum()
