@@ -329,14 +329,7 @@ class RGFNPoolSampler(RGFN):
         if frac_in_pool < 1.0:
             print(f"Warning: {n_out_of_pool}/{n_total_sampled} GFN samples were out-of-pool")
 
-        # X = torch.stack(collected_X).to(candidates.device)  # (M, 2048)
-
-        print("candidates device:", candidates.device)
-        X = torch.stack(collected_X).to(candidates.device)
-        print("X device:", X.device)
-
-        print("model device:", next(self.forward_sampler.policy.parameters()).device)
-        print("GP device:", next(acq_func.model.model.parameters()).device)
+        X = torch.stack(collected_X).to(candidates.device)  # (M, 2048)
 
         # Evaluate acq over M candidates and select top-q
         with torch.no_grad():
@@ -345,7 +338,6 @@ class RGFNPoolSampler(RGFN):
         top_q = acq_values.topk(q)
 
         # JS divergence: GFN empirical vs true acq distribution over full unobserved pool
-        print("Computing acq values over entire candidate pool..")
         with torch.no_grad():
             true_acq = torch.cat(
                 [
@@ -353,7 +345,6 @@ class RGFNPoolSampler(RGFN):
                     for chunk in candidates.split(self.max_batch_size)
                 ]
             )
-        print("done")
         true_acq = true_acq.clamp(min=0)
         true_dist = true_acq / true_acq.sum()
 
