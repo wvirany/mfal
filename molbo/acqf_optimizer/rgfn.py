@@ -116,6 +116,7 @@ class RGFN(AcqfOptimizer):
         self.n_iterations = n_iterations
 
         device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
 
         # RGFN prefers torch.float32, molbo prefers torch.float64
         prev_dtype = torch.get_default_dtype()
