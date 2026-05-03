@@ -4,6 +4,16 @@ from botorch.optim import optimize_acqf_discrete
 from molbo.acqf_optimizer.base import AcqfOptimizer, Initialization, OptimizationResult
 
 
+def compute_acq_sparsity(acq_values: torch.Tensor) -> float:
+    return 1 - (acq_values.mean() / acq_values.max()).item()
+
+
+def compute_acq_entropy(acq_values: torch.Tensor) -> float:
+    shifted = acq_values - acq_values.min()
+    probs = shifted / shifted.sum()
+    return -(probs * torch.log(probs + 1e-10)).sum().item()
+
+
 class PoolBase(AcqfOptimizer):
     def __init__(self, q: int = 1, max_batch_size: int = 1024):
         self.q = q
@@ -94,13 +104,3 @@ class ThompsonSampler(PoolBase):
             new_X=torch.stack(selected_X),
             acq_val=torch.stack(selected_vals),
         )
-
-
-def compute_acq_sparsity(acq_values: torch.Tensor) -> float:
-    return 1 - (acq_values.mean() / acq_values.max()).item()
-
-
-def compute_acq_entropy(acq_values: torch.Tensor) -> float:
-    shifted = acq_values - acq_values.min()
-    probs = shifted / shifted.sum()
-    return -(probs * torch.log(probs + 1e-10)).sum().item()

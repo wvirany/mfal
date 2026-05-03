@@ -23,6 +23,14 @@ from molbo.acqf_optimizer import AcqfOptimizer, Initialization, OptimizationResu
 from molbo.utils import smiles_to_morgan_fp
 
 
+def _compute_js_divergence(p: torch.Tensor, q: torch.Tensor) -> float:
+    """JS divergence between two probability distributions."""
+    m = 0.5 * (p + q)
+    kl_pm = (p * torch.log((p + 1e-10) / (m + 1e-10))).sum()
+    kl_qm = (q * torch.log((q + 1e-10) / (m + 1e-10))).sum()
+    return (0.5 * (kl_pm + kl_qm)).item()
+
+
 class AcquisitionProxy(ProxyBase):
     """
     Wraps an acquisition function as an RGFN proxy.
@@ -178,10 +186,23 @@ class RGFN(AcqfOptimizer):
         self.trainer.start_iteration = self.trainer.n_iterations
 
         # Sample M candidates from RGFN
-        trajectories = self.forward_sampler.sample_trajectories_batch(
-            n_total_trajectories=self.M, batch_size=self.M
-        )
-        terminal_states = trajectories.get_last_states_flat()
+        seen_smiles = set()
+        terminal_states = []
+
+        while len(terminal_states) < self.M:
+            trajectories = self.forward_sampler.sample_trajectories_batch(
+                n_total_trajectories=self.M, batch_size=self.M
+            )
+            for s in trajectories.get_last_states_flat():
+                if (
+                    not isinstance(s, ReactionStateEarlyTerminal)
+                    and s.molecule.smiles not in seen_smiles
+                ):
+                    seen_smiles.add(s.molecule.smiles)
+                    terminal_states.append(s)
+                if len(terminal_states) == self.M:
+                    break
+
         smiles = [s.molecule.smiles for s in terminal_states]
 
         torch.set_default_dtype(prev_dtype)
@@ -227,3 +248,106 @@ class RGFN(AcqfOptimizer):
         train_y = oracle(smiles)
 
         return Initialization(train_X=train_X, train_y=train_y, smiles=smiles)
+
+
+class RGFNPoolSampler(RGFN):
+    """RGFN with a fully enumerated state space."""
+
+    def __init__(self, *args, max_batch_size: int = 1024, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.max_batch_size = max_batch_size
+
+    def optimize(self, acq_func, candidates: torch.Tensor):
+        # Build local hash map: bytes -> local index in unobserved pool
+        pool_map = {candidates[i].numpy().tobytes(): i for i in range(len(candidates))}
+
+        # Train GFN (dtype management handled by parent)
+        prev_dtype = torch.get_default_dtype()
+        torch.set_default_dtype(torch.float32)
+        self.proxy.update(acq_func)
+        self.trainer.n_iterations = self.trainer.start_iteration + self.n_iterations
+        self.trainer.train()
+        self.trainer.start_iteration = self.trainer.n_iterations
+        torch.set_default_dtype(prev_dtype)
+
+        # Sampling loop
+        collected_X = []  # fingerprints, float64
+        collected_idx = []  # local pool indices
+        selected_hashes = set()
+        n_total_sampled = 0
+        n_out_of_pool = 0
+
+        while len(collected_X) < self.M:
+            torch.set_default_dtype(torch.float32)
+            trajectories = self.forward_sampler.sample_trajectories_batch(
+                n_total_trajectories=self.M, batch_size=self.M
+            )
+            terminal_states = trajectories.get_last_states_flat()
+            torch.set_default_dtype(prev_dtype)
+
+            for state in terminal_states:
+                if isinstance(state, ReactionStateEarlyTerminal):
+                    continue
+                n_total_sampled += 1
+                fp = smiles_to_morgan_fp(state.molecule.smiles)
+                key = fp.numpy().tobytes()
+
+                if key not in pool_map:
+                    n_out_of_pool += 1
+                    continue
+                if key in selected_hashes:
+                    continue
+
+                selected_hashes.add(key)
+                collected_X.append(fp)
+                collected_idx.append(pool_map[key])
+
+                if len(collected_X) == self.M:
+                    break
+
+            remaining = len(pool_map) - len(selected_hashes)
+            if remaining == 0:
+                print(
+                    f"Warning: pool exhausted after collecting {len(collected_X)}/{self.M} candidates"
+                )
+                break
+
+        frac_in_pool = 1 - (n_out_of_pool / max(n_total_sampled, 1))
+        if frac_in_pool < 1.0:
+            print(f"Warning: {n_out_of_pool}/{n_total_sampled} GFN samples were out-of-pool")
+
+        X = torch.stack(collected_X)  # (M, 2048)
+
+        # Evaluate acq over M candidates and select top-q
+        with torch.no_grad():
+            acq_values = acq_func(X.reshape(-1, 1, X.shape[-1]))  # (M,)
+        q = min(self.q, len(collected_X))
+        top_q = acq_values.topk(q)
+
+        # JS divergence: GFN empirical vs true acq distribution over full unobserved pool
+        with torch.no_grad():
+            true_acq = torch.cat(
+                [
+                    acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
+                    for chunk in candidates.split(self.max_batch_size)
+                ]
+            )
+        true_acq = true_acq.clamp(min=0)
+        true_dist = true_acq / true_acq.sum()
+
+        gfn_counts = torch.zeros(len(candidates))
+        for idx in collected_idx:
+            gfn_counts[idx] += 1
+        gfn_dist = gfn_counts / gfn_counts.sum()
+
+        js = _compute_js_divergence(true_dist, gfn_dist)
+
+        return OptimizationResult(
+            new_X=X[top_q.indices],
+            acq_val=top_q.values,
+            smiles=None,
+            metrics={
+                "js_divergence": js,
+                "frac_in_pool": frac_in_pool,
+            },
+        )
