@@ -72,10 +72,10 @@ class AcquisitionProxy(ProxyBase):
             print("Warning: NaN acquisition values detected, replacing with zeros")
             acq_values = torch.nan_to_num(acq_values, nan=0.0)
 
-        result = torch.zeros(len(states), dtype=torch.float32)
+        result = torch.zeros(len(states), dtype=torch.float32, device=self.device)
         result[torch.tensor(valid_mask)] = acq_values
 
-        return ProxyOutput(value=result.to(self.device), components=None)
+        return ProxyOutput(value=result, components=None)
 
     @property
     def is_non_negative(self):
