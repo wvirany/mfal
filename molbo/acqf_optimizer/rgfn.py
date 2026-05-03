@@ -221,7 +221,7 @@ class RGFN(AcqfOptimizer):
         torch.set_default_dtype(prev_dtype)
 
         # Convert to fingerprints
-        X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])  # (M, 2048)
+        X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles]).to(self.device)  # (M, 2048)
 
         # Evaluate acquisition function and select top-q
         with torch.no_grad():
