@@ -270,7 +270,7 @@ class RGFNPoolSampler(RGFN):
 
     def optimize(self, acq_func, candidates: torch.Tensor):
         # Build local hash map: bytes -> local index in unobserved pool
-        pool_map = {candidates[i].numpy().tobytes(): i for i in range(len(candidates))}
+        pool_map = {candidates[i].cpu().numpy().tobytes(): i for i in range(len(candidates))}
 
         # Train GFN (dtype management handled by parent)
         prev_dtype = torch.get_default_dtype()
@@ -336,6 +336,7 @@ class RGFNPoolSampler(RGFN):
         top_q = acq_values.topk(q)
 
         # JS divergence: GFN empirical vs true acq distribution over full unobserved pool
+        print("Computing acq values over entire candidate pool..")
         with torch.no_grad():
             true_acq = torch.cat(
                 [
@@ -343,6 +344,7 @@ class RGFNPoolSampler(RGFN):
                     for chunk in candidates.split(self.max_batch_size)
                 ]
             )
+        print("done")
         true_acq = true_acq.clamp(min=0)
         true_dist = true_acq / true_acq.sum()
 
@@ -388,7 +390,9 @@ class RGFNPoolSampler(RGFN):
         smiles = [s.molecule.smiles for s in sampled_states]
         train_X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])
         train_y = oracle(train_X)
-        observed_indices = [oracle._hash_to_idx[hash(row.numpy().tobytes())] for row in train_X]
+        observed_indices = [
+            oracle._hash_to_idx[hash(row.cpu().numpy().tobytes())] for row in train_X
+        ]
 
         return Initialization(
             train_X=train_X,
