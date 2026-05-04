@@ -6,3 +6,5 @@ n_iterations: 250
 train_forward_n_trajectories: 64
 train_replay_n_trajectories: 32
 max_batch_size: 1024
+compute_js_divergence: true
+M_eval: 1000

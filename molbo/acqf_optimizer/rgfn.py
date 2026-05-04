@@ -267,9 +267,18 @@ class RGFN(AcqfOptimizer):
 class RGFNPoolSampler(RGFN):
     """RGFN with a fully enumerated state space."""
 
-    def __init__(self, *args, max_batch_size: int = 1024, **kwargs):
+    def __init__(
+        self,
+        *args,
+        max_batch_size: int = 1024,
+        compute_js_divergence: bool = True,
+        M_eval: int = 1000,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.max_batch_size = max_batch_size
+        self.compute_js_divergence = compute_js_divergence
+        self.M_eval = M_eval
 
     def optimize(self, acq_func, candidates: torch.Tensor):
         # Build local hash map: bytes -> local index in unobserved pool
@@ -339,22 +348,38 @@ class RGFNPoolSampler(RGFN):
         top_q = acq_values.topk(q)
 
         # JS divergence: GFN empirical vs true acq distribution over full unobserved pool
-        with torch.no_grad():
-            true_acq = torch.cat(
-                [
-                    acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
-                    for chunk in candidates.split(self.max_batch_size)
-                ]
+        if self.compute_js_divergence:
+            with torch.no_grad():
+                true_acq = torch.cat(
+                    [
+                        acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
+                        for chunk in candidates.split(self.max_batch_size)
+                    ]
+                )
+            true_acq = true_acq.clamp(min=0)
+            true_dist = true_acq / true_acq.sum()
+
+            eval_counts = torch.zeros(len(candidates), device=candidates.device)
+
+            torch.set_default_dtype(torch.float32)
+            trajectories = self.forward_sampler.sample_trajectories_batch(
+                n_total_trajectories=self.M_eval, batch_size=self.M_eval
             )
-        true_acq = true_acq.clamp(min=0)
-        true_dist = true_acq / true_acq.sum()
+            terminal_states = trajectories.get_last_states_flat()
+            torch.set_default_dtype(prev_dtype)
 
-        gfn_counts = torch.zeros(len(candidates), device=candidates.device)
-        for idx in collected_idx:
-            gfn_counts[idx] += 1
-        gfn_dist = gfn_counts / gfn_counts.sum()
+            for state in terminal_states:
+                if isinstance(state, ReactionStateEarlyTerminal):
+                    continue
+                fp = smiles_to_morgan_fp(state.molecule.smiles)
+                key = fp.numpy().tobytes()
+                if key in pool_map:
+                    eval_counts[pool_map[key]] += 1
 
-        js = _compute_js_divergence(true_dist, gfn_dist)
+            gfn_dist = eval_counts / eval_counts.sum().clamp(min=1)
+            js = _compute_js_divergence(true_dist, gfn_dist)
+        else:
+            js = None
 
         return OptimizationResult(
             new_X=X[top_q.indices],
