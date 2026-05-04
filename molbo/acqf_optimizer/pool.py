@@ -46,14 +46,15 @@ class PoolSampler(PoolBase):
                 ]
             )
 
-        if (acq_values < 0).any():
-            print("Warning: negative acquisition values encountered during sampling")
-            print(f"Total acq_vals < 0: {(acq_values < 0).sum()}")
-        assert not (acq_values < 0).all(), "All acquisition values are negative"
-        assert acq_values.sum() > 0, "Normalization constant is negative; exiting"
-
         acq_clamped = acq_values.clamp(min=0)
-        probs = acq_clamped / acq_clamped.sum()
+
+        if acq_clamped.sum() == 0:
+            print(
+                "Warning: all acquisition values are zero after clamping; falling back to uniform sampling"
+            )
+            probs = torch.ones(len(candidates), device=candidates.device) / len(candidates)
+        else:
+            probs = acq_clamped / acq_clamped.sum()
 
         n_nonzero = (probs > 0).sum().item()
         if n_nonzero < self.q:
