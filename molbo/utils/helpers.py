@@ -59,3 +59,28 @@ def get_centroid_indices(smiles_list, scores, tanimoto_threshold=0.7):
                 centroids.append((fp, i.item()))
 
     return [idx for _, idx in centroids]
+
+
+def get_centroid_indices_from_fps(
+    fps: torch.Tensor, scores: torch.Tensor, tanimoto_threshold: float = 0.7
+):
+    """Greedy Tanimoto clustering on fingerprint tensors in descending score order."""
+    sorted_indices = torch.argsort(scores, descending=True)
+    centroid_fps = []
+    centroid_indices = []
+
+    for i in sorted_indices:
+        fp = fps[i]
+        if len(centroid_fps) == 0:
+            centroid_fps.append(fp)
+            centroid_indices.append(i.item())
+        else:
+            centroids = torch.stack(centroid_fps)  # (n_centroids, d)
+            dot = (fp * centroids).sum(dim=1)
+            denom = fp.pow(2).sum() + centroids.pow(2).sum(dim=1) - dot
+            sims = dot / denom.clamp(min=1e-10)
+            if sims.max().item() < tanimoto_threshold:
+                centroid_fps.append(fp)
+                centroid_indices.append(i.item())
+
+    return centroid_indices

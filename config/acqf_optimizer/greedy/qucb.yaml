@@ -1,0 +1,13 @@
+_target_: molbo.acqf_optimizer.pool.GreedySampler
+sampler:
+  _target_: molbo.acqf_optimizer.pool.PoolSampler
+  q: 500
+  max_batch_size: 256
+sampler_acquisition:
+  _target_: molbo.acquisition.base.PosteriorMeanAcquisition
+selector:
+  _target_: molbo.acqf_optimizer.pool.PoolMaximizer
+  q: 50
+  max_batch_size: 256
+selector_acquisition:
+  _target_: molbo.acquisition.monte_carlo.qUCBAcquisition

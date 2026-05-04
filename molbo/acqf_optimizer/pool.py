@@ -3,6 +3,7 @@ from botorch.optim import optimize_acqf_discrete
 
 from molbo.acqf_optimizer.base import AcqfOptimizer, Initialization, OptimizationResult
 from molbo.acquisition import Acquisition
+from molbo.utils import get_centroid_indices_from_fps
 
 
 def compute_acq_sparsity(acq_values: torch.Tensor) -> float:
@@ -119,6 +120,30 @@ class TopKSelector(PoolBase):
             )
         top_q = acq_values.topk(min(self.q, len(candidates)))
         return OptimizationResult(new_X=candidates[top_q.indices], acq_val=top_q.values)
+
+
+class TopKModesSelector(PoolBase):
+    """Select top-q candidates by greedy Tanimoto clustering on acquisition values."""
+
+    def __init__(self, q: int = 50, max_batch_size: int = 1024, tanimoto_threshold: float = 0.7):
+        super().__init__(q=q, max_batch_size=max_batch_size)
+        self.tanimoto_threshold = tanimoto_threshold
+
+    def optimize(self, acq_func, candidates: torch.Tensor):
+        with torch.no_grad():
+            acq_values = torch.cat(
+                [
+                    acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
+                    for chunk in candidates.split(self.max_batch_size)
+                ]
+            )
+        centroid_indices = get_centroid_indices_from_fps(
+            candidates, acq_values, self.tanimoto_threshold
+        )
+        # take top-q centroids (already in descending score order)
+        selected = centroid_indices[: self.q]
+        idx = torch.tensor(selected, device=candidates.device)
+        return OptimizationResult(new_X=candidates[idx], acq_val=acq_values[idx])
 
 
 class GreedySampler(AcqfOptimizer):
