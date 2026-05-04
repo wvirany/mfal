@@ -138,7 +138,7 @@ class TopKModesSelector(PoolBase):
                 ]
             )
         centroid_indices = get_centroid_indices_from_fps(
-            candidates, acq_values, self.tanimoto_threshold
+            candidates, acq_values, self.tanimoto_threshold, max_centroids=self.q
         )
         # take top-q centroids (already in descending score order)
         selected = centroid_indices[: self.q]
