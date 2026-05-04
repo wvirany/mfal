@@ -26,8 +26,8 @@ hydra:
       oracle: tiny_lib/jnk3
       seed: range(0,3)
   launcher:
-    timeout_min: 360
+    timeout_min: 180
     setup:
       - module load python/3.11 rdkit/2024.09.6 cuda/12.6
       - source ~/scratch/molbo/venv_rgfn/bin/activate
-    array_parallelism: 5
+    array_parallelism: 15
