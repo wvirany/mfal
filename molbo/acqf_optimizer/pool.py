@@ -2,6 +2,7 @@ import torch
 from botorch.optim import optimize_acqf_discrete
 
 from molbo.acqf_optimizer.base import AcqfOptimizer, Initialization, OptimizationResult
+from molbo.acquisition import Acquisition
 
 
 def compute_acq_sparsity(acq_values: torch.Tensor) -> float:
@@ -105,3 +106,43 @@ class ThompsonSampler(PoolBase):
             new_X=torch.stack(selected_X),
             acq_val=torch.stack(selected_vals),
         )
+
+
+class TopKSelector(PoolBase):
+    def optimize(self, acq_func, candidates: torch.Tensor):
+        with torch.no_grad():
+            acq_values = torch.cat(
+                [
+                    acq_func(chunk.reshape(-1, 1, chunk.shape[-1]))
+                    for chunk in candidates.split(self.max_batch_size)
+                ]
+            )
+        top_q = acq_values.topk(min(self.q, len(candidates)))
+        return OptimizationResult(new_X=candidates[top_q.indices], acq_val=top_q.values)
+
+
+class GreedySampler(AcqfOptimizer):
+    """Sample M candidates using any optimizer, then select q greedily using a downstream optimizer."""
+
+    def __init__(
+        self,
+        sampler: AcqfOptimizer,
+        selector: AcqfOptimizer,
+        sampler_acquisition: Acquisition,
+        selector_acquisition: Acquisition,
+    ):
+        self.sampler = sampler
+        self.selector = selector
+        self.sampler_acquisition = sampler_acquisition
+        self.selector_acquisition = selector_acquisition
+
+    def sample_init(self, oracle, n_init):
+        return self.sampler.sample_init(oracle, n_init)
+
+    def optimize(self, acq_func, candidates: torch.Tensor):
+        model = acq_func.model
+        self.sampler_acquisition.update(model)
+        self.selector_acquisition.update(model)
+        sample_result = self.sampler.optimize(self.sampler_acquisition, candidates)
+        select_result = self.selector.optimize(self.selector_acquisition, sample_result.new_X)
+        return select_result

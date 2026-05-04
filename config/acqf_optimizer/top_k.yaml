@@ -1,0 +1,3 @@
+_target_: molbo.acqf_optimizer.pool.TopKSelector
+q: 50
+max_batch_size: 256
