@@ -18,7 +18,6 @@ hydra:
       acquisition: ei,posterior_mean,ucb_beta_0.1
       acqf_optimizer: rgfn_pool_sampler
       acqf_optimizer.q: 50
-      acqf_optimizer.M: 50
       acqf_optimizer.n_iterations: 200
       acqf_optimizer.max_batch_size: 256
       model: reward_shaped_tanimoto_gp

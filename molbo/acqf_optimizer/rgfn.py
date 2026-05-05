@@ -104,14 +104,12 @@ class RGFN(AcqfOptimizer):
         self,
         reaction_path: str = str(_RGFN_DATA / "templates_30k.txt"),
         fragment_path: str = str(_RGFN_DATA / "fragments_30k.txt"),
-        M: int = 100,
         q: int = 100,
         n_iterations: int = 250,
         train_forward_n_trajectories: int = 64,
         train_replay_n_trajectories: int = 32,
         run_dir: str = "./tmp_rgfn",
     ):
-        self.M = M
         self.q = q
         self.n_iterations = n_iterations
 
@@ -199,13 +197,13 @@ class RGFN(AcqfOptimizer):
         self.trainer.train()
         self.trainer.start_iteration = self.trainer.n_iterations
 
-        # Sample M candidates from RGFN
+        # Sample q candidates from RGFN
         seen_smiles = set()
         terminal_states = []
 
-        while len(terminal_states) < self.M:
+        while len(terminal_states) < self.q:
             trajectories = self.forward_sampler.sample_trajectories_batch(
-                n_total_trajectories=self.M, batch_size=self.M
+                n_total_trajectories=self.q, batch_size=self.q
             )
             for s in trajectories.get_last_states_flat():
                 if (
@@ -214,7 +212,7 @@ class RGFN(AcqfOptimizer):
                 ):
                     seen_smiles.add(s.molecule.smiles)
                     terminal_states.append(s)
-                if len(terminal_states) == self.M:
+                if len(terminal_states) == self.q:
                     break
 
         smiles = [s.molecule.smiles for s in terminal_states]
@@ -222,17 +220,13 @@ class RGFN(AcqfOptimizer):
         torch.set_default_dtype(prev_dtype)
 
         # Convert to fingerprints
-        X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles]).to(self.device)  # (M, 2048)
+        X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles]).to(self.device)  # (q, 2048)
 
         # Evaluate acquisition function and select top-q
         with torch.no_grad():
-            acq_values = acq_func(X.reshape(-1, 1, X.shape[-1]))  # (M, q, d) --> (M,)
+            acq_values = acq_func(X.reshape(-1, 1, X.shape[-1]))  # (q, q, d) --> (q,)
 
-        top_q = acq_values.topk(self.q)
-        new_X = X[top_q.indices]
-        acq_val = top_q.values
-
-        return OptimizationResult(new_X=new_X, acq_val=acq_val, smiles=smiles)
+        return OptimizationResult(new_X=X, acq_val=acq_values, smiles=smiles)
 
     def sample_init(self, oracle, n_init: int) -> Initialization:
         uniform_sampler = RandomSampler(
@@ -300,10 +294,10 @@ class RGFNPoolSampler(RGFN):
         n_total_sampled = 0
         n_out_of_pool = 0
 
-        while len(collected_X) < self.M:
+        while len(collected_X) < self.q:
             torch.set_default_dtype(torch.float32)
             trajectories = self.forward_sampler.sample_trajectories_batch(
-                n_total_trajectories=self.M, batch_size=self.M
+                n_total_trajectories=self.q, batch_size=self.q
             )
             terminal_states = trajectories.get_last_states_flat()
             torch.set_default_dtype(prev_dtype)
@@ -325,13 +319,13 @@ class RGFNPoolSampler(RGFN):
                 collected_X.append(fp)
                 collected_idx.append(pool_map[key])
 
-                if len(collected_X) == self.M:
+                if len(collected_X) == self.q:
                     break
 
             remaining = len(pool_map) - len(selected_hashes)
             if remaining == 0:
                 print(
-                    f"Warning: pool exhausted after collecting {len(collected_X)}/{self.M} candidates"
+                    f"Warning: pool exhausted after collecting {len(collected_X)}/{self.q} candidates"
                 )
                 break
 
@@ -343,9 +337,7 @@ class RGFNPoolSampler(RGFN):
 
         # Evaluate acq over M candidates and select top-q
         with torch.no_grad():
-            acq_values = acq_func(X.reshape(-1, 1, X.shape[-1]))  # (M,)
-        q = min(self.q, len(collected_X))
-        top_q = acq_values.topk(q)
+            acq_values = acq_func(X.reshape(-1, 1, X.shape[-1]))  # (q,)
 
         # JS divergence: GFN empirical vs true acq distribution over full unobserved pool
         if self.compute_js_divergence:
@@ -382,8 +374,8 @@ class RGFNPoolSampler(RGFN):
             js = None
 
         return OptimizationResult(
-            new_X=X[top_q.indices],
-            acq_val=top_q.values,
+            new_X=X,
+            acq_val=acq_values,
             smiles=None,
             metrics={
                 "js_divergence": js,

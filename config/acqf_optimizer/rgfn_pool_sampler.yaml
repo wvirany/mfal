@@ -1,7 +1,6 @@
 _target_: molbo.acqf_optimizer.rgfn.RGFNPoolSampler
 
-M: 100
-q: 100
+q: 50
 n_iterations: 250
 train_forward_n_trajectories: 64
 train_replay_n_trajectories: 32
