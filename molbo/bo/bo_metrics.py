@@ -28,21 +28,49 @@ class BOMetrics:
         thresholds: dict = None,
         threshold_labels: dict = None,
         n_top_k: dict = None,
-        smiles: list = None,
         logger=None,
     ):
         self.f_max = f_max
         self.thresholds = thresholds
         self.threshold_labels = threshold_labels
         self.n_top_k = n_top_k
-        self.smiles = smiles
         self.logger = logger
         self.history = None
+
+        self.seen_scaffolds = {}
+        if self.thresholds is not None:
+            self.seen_scaffolds = {k: set() for k in self.thresholds}
+        self.seen_scaffolds["all"] = set()
 
     def initialize(self, history):
         self.history = history
 
-    def update(self, iteration, extra_metrics=None):
+    def print_summary(self):
+        y_init = self.history["y_init"].reshape(-1)
+        y_obs = self.history["y_observed"].reshape(-1)
+        y = torch.cat([y_init, y_obs])
+
+        print("\n=== BO Summary ===")
+        print(f"Total observations: {len(y_obs)}")
+        print(f"Best observed: {self._compute_best_observed(y)[-1].item():.4f}")
+        print(f"Top-10 mean: {self._compute_topk_mean(y, k=10)[-1].item():.4f}")
+
+        if self.f_max is not None:
+            print(f"Simple regret: {self._compute_simple_regret(y)[-1].item():.4f}")
+
+        if self.thresholds is not None:
+            print("\nRetrieval rate:")
+            for k in reversed(sorted(self.thresholds)):
+                print(
+                    f"  {self.threshold_labels[k]}: {self.history[f'retrieval_rate_{self.threshold_labels[k]}'][-1]:.4f}"
+                )
+
+            print("\nNum scaffolds:")
+            print(f"  total: {len(self.seen_scaffolds['all'])}")
+            for k in reversed(sorted(self.thresholds)):
+                print(f"  {self.threshold_labels[k]}: {len(self.seen_scaffolds[k])}")
+
+    def update(self, iteration, new_y, new_smiles=None, extra_metrics=None):
         y_init = self.history["y_init"].reshape(-1)
         y_obs = self.history["y_observed"].reshape(-1)
         y = torch.cat([y_init, y_obs])
@@ -66,6 +94,32 @@ class BOMetrics:
                 rr = self._compute_retrieval_rate(y, threshold, self.n_top_k[k])
                 metrics_dict[f"retrieval_rate_{self.threshold_labels[k]}"] = rr[-1].item()
 
+        if new_smiles is not None:
+            _, self.seen_scaffolds["all"] = self._compute_num_scaffolds(
+                new_smiles, self.seen_scaffolds["all"]
+            )
+            metrics_dict["num_scaffolds"] = len(self.seen_scaffolds["all"])
+            if self.thresholds is not None:
+                for k, threshold in self.thresholds.items():
+                    above_threshold = [
+                        smi
+                        for smi, score in zip(new_smiles, new_y.reshape(-1))
+                        if score.item() >= threshold
+                    ]
+                    _, self.seen_scaffolds[k] = self._compute_num_scaffolds(
+                        above_threshold, self.seen_scaffolds[k]
+                    )
+                    metrics_dict[f"num_scaffolds_{self.threshold_labels[k]}"] = len(
+                        self.seen_scaffolds[k]
+                    )
+
+        # Batch metrics
+        if len(new_y.reshape(-1)) > 1:
+            batch_y = new_y.reshape(-1)
+            metrics_dict["batch_mean"] = batch_y.mean().item()
+            if new_smiles is not None:
+                metrics_dict["batch_diversity"] = self._compute_batch_diversity(new_smiles)
+
         if extra_metrics is not None:
             metrics_dict.update(extra_metrics)
 
@@ -88,10 +142,6 @@ class BOMetrics:
         """Compute cumulative regret at each iteration."""
         return torch.cumsum(self.f_max - y, dim=0)
 
-    def _compute_best_observed(self, y):
-        """Compute best observed value at each iteration."""
-        return torch.cummax(y, dim=0).values
-
     def _compute_topk_mean(self, y, k=10):
         """Compute mean of top-k of observed values at each iteration."""
         topk_means = []
@@ -103,107 +153,30 @@ class BOMetrics:
                 topk_means.append(y[:i].mean().item())
         return torch.tensor(topk_means)
 
+    def _compute_best_observed(self, y):
+        """Compute best observed value at each iteration."""
+        return torch.cummax(y, dim=0).values
+
     def _compute_retrieval_rate(self, y, threshold, n_top_k):
         """Compute proportion of samples found above given threshold"""
         found = (y >= threshold).cumsum(dim=0)
         return found / n_top_k
 
-    def compute_metrics(self):
-        """
-        Compute all post-hoc diversity metrics. This is typically called after a BO run
-        by loading `history` from a checkpoint and computing post-hoc; it's expensive to compute
-        with WandB during a job.
-        """
-        if self.smiles is None or self.thresholds is None:
-            return
-
-        curves = self.compute_batch_metrics()
-
-        if self.logger is not None:
-            n_iters = len(self.history["iteration"])
-            y_obs = self.history["y_observed"].squeeze()
-            q = len(y_obs) // n_iters
-            for i in range(q, len(y_obs) + 1, q):
-                log_dict = {"n_observed": i}
-                for key, curve in curves.items():
-                    log_dict[key] = curve[(i // q) - 1]
-                self.logger.log(log_dict)
-
-        return curves
-
-    def compute_batch_metrics(self):
-        """
-        Outer loop over batches; compute num modes and num_scaffolds curves
-        for each threshold in acquisition order.
-        """
-        y_obs = self.history["y_observed"].reshape(-1)
-        observed_indices = self.history["observed_indices"]
-        n_iters = len(self.history["iteration"])
-        q = len(y_obs) // n_iters
-        stride = max(
-            1, n_iters // 100
-        )  # For reducing computations on runs with many iters (small q, large n)
-
-        mode_curves = {f"num_modes_{self.threshold_labels[k]}": [] for k in self.thresholds}
-        scaffold_curves = {f"num_scaffolds_{self.threshold_labels[k]}": [] for k in self.thresholds}
-        diversity_curve = []
-
-        for i in range(q, len(y_obs) + 1, q * stride):
-            acq_indices = observed_indices[:i]
-            acq_smiles = [self.smiles[idx] for idx in acq_indices]
-            acq_scores = y_obs[:i]
-
-            # Modes
-            num_modes = self._compute_num_modes(acq_smiles, acq_scores)
-            for k in self.thresholds:
-                mode_curves[f"num_modes_{self.threshold_labels[k]}"].append(num_modes[k])
-
-            # Scaffolds
-            for k, threshold in self.thresholds.items():
-                above_threshold = [
-                    smi for smi, s in zip(acq_smiles, acq_scores) if s.item() >= threshold
-                ]
-                count, _ = self._compute_num_scaffolds(above_threshold)
-                scaffold_curves[f"num_scaffolds_{self.threshold_labels[k]}"].append(count)
-
-            # Batch diversity - mean pairwise Tanimoto distance computed *per batch*
-            batch_indices = observed_indices[i - q : i]
-            batch_smiles = [self.smiles[idx] for idx in batch_indices]
-            diversity_curve.append(self._compute_batch_diversity(batch_smiles))
-
-        return {**mode_curves, **scaffold_curves, "batch_diversity": diversity_curve}
-
-    def _compute_num_modes(self, smiles, scores):
-        """
-        Greedy Tanimoto clustering (threshold=0.7) in descending score order.
-        Returns count of mode centroids above each score threshold.
-        """
-        centroid_indices = get_centroid_indices(smiles, scores)
-        centroid_scores = scores[centroid_indices]
-
-        return {
-            k: (centroid_scores >= threshold).sum().item()
-            for k, threshold in self.thresholds.items()
-        }
-
-    def _compute_num_scaffolds(self, smiles, seen_scaffolds: set = None):
-        """
-        Number of unique Bemis-Murcko scaffolds in given SMILES list.
-        Optionally builds on an existing set of scaffolds.
-        """
+    def _compute_num_scaffolds(self, smiles, seen_scaffolds=None):
         if seen_scaffolds is None:
             seen_scaffolds = set()
-
         for smi in smiles:
             try:
                 scaffold = MurckoScaffoldSmiles(smi)
                 seen_scaffolds.add(scaffold)
             except Exception:
                 continue
-
         return len(seen_scaffolds), seen_scaffolds
 
     def _compute_batch_diversity(self, smiles):
+        """
+        Compute batch diversity in terms of pairwise Tanimoto similarity.
+        """
         fps = []
         for smi in smiles:
             try:
@@ -220,3 +193,16 @@ class BOMetrics:
                 sims.append(DataStructs.TanimotoSimilarity(fps[i], fps[j]))
 
         return 1.0 - np.mean(sims)
+
+    def _compute_num_modes(self, smiles, scores):
+        """
+        Greedy Tanimoto clustering (threshold=0.7) in descending score order.
+        Returns count of mode centroids above each score threshold.
+        """
+        centroid_indices = get_centroid_indices(smiles, scores)
+        centroid_scores = scores[centroid_indices]
+
+        return {
+            k: (centroid_scores >= threshold).sum().item()
+            for k, threshold in self.thresholds.items()
+        }

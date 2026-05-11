@@ -68,12 +68,11 @@ def main(cfg: DictConfig):
         thresholds=getattr(oracle, "thresholds", None),
         threshold_labels=getattr(oracle, "threshold_labels", None),
         n_top_k=getattr(oracle, "n_top_k", None),
-        smiles=candidate_smiles if dataset is not None else None,
         logger=logger,
     )
 
     # Run
-    bo = BOLoop(
+    bo_loop = BOLoop(
         init.train_X,
         init.train_y,
         model,
@@ -89,12 +88,11 @@ def main(cfg: DictConfig):
         device=device,
     )
 
-    history = bo.run(n_iters=cfg.bo.n_iters)
+    bo_loop.run(n_iters=cfg.bo.n_iters)
 
     logger.finish()
 
-    print("Final dataset size:", len(history["y_init"]) + len(history["y_observed"]))
-    print(f"Best observed value: {history['y_observed'].max().item():.4f}")
+    metrics.print_summary()
 
 
 if __name__ == "__main__":

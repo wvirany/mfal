@@ -80,6 +80,7 @@ class BOLoop:
 
         # Initialize candidate set and observed indices mask in fixed-pool setting
         self.candidates = candidates
+        self.candidate_smiles = candidate_smiles
         if (candidates is not None) and (observed_indices is not None):
             self.candidates_mask = torch.ones(
                 len(candidates), dtype=torch.bool, device=candidates.device
@@ -116,9 +117,15 @@ class BOLoop:
                 if new_y.dim() == 1:
                     new_y = new_y.unsqueeze(-1)
                 self.candidates_mask[global_idxs] = False
+                new_smiles = (
+                    [self.candidate_smiles[i] for i in global_idxs]
+                    if self.candidate_smiles is not None
+                    else None
+                )
             # Continuous / generative
             else:
                 result = self.acqf_optimizer.optimize(self.acq_func)
+                new_smiles = result.smiles if result.smiles is not None else None
                 if result.smiles is not None:
                     new_y = self.oracle(result.smiles).to(self.device)
                 else:
@@ -147,10 +154,9 @@ class BOLoop:
 
             # Update metrics
             if self.metrics is not None:
-                self.metrics.update(i, extra_metrics=result.metrics)
-
-        if self.candidates is not None and self.metrics is not None:
-            self.history["batch_metrics"] = self.metrics.compute_batch_metrics()
+                self.metrics.update(
+                    i, new_y=new_y, new_smiles=new_smiles, extra_metrics=result.metrics
+                )
 
         if self.checkpoint is not None:
             self.checkpoint.save(self.history)
