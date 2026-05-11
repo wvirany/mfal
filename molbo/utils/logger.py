@@ -105,7 +105,7 @@ class BOCheckpoint:
     def load(self):
         if not self.path.exists():
             return None
-        data = torch.load(self.path)
+        data = torch.load(self.path, weights_only=False)
         torch.set_rng_state(data["rng_state"])
         if data.get("cuda_rng_state", None) is not None:
             torch.cuda.set_rng_state(data["cuda_rng_state"])
@@ -115,5 +115,5 @@ class BOCheckpoint:
     def peek_indices(self):
         if not self.path.exists():
             return None
-        data = torch.load(self.path)
+        data = torch.load(self.path, weights_only=False)
         return data["history"].get("indices", None)

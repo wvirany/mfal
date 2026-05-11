@@ -44,6 +44,8 @@ class BOMetrics:
 
     def initialize(self, history):
         self.history = history
+        if "seen_scaffolds" in history:
+            self.seen_scaffolds = history["seen_scaffolds"]
 
     def print_summary(self):
         y_init = self.history["y_init"].reshape(-1)
@@ -130,6 +132,7 @@ class BOMetrics:
             if k not in self.history:
                 self.history[k] = []
             self.history[k].append(v)
+        self.history["seen_scaffolds"] = self.seen_scaffolds
 
         if self.logger is not None:
             self.logger.log(metrics_dict)

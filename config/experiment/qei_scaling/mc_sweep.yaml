@@ -1,0 +1,32 @@
+# @package _global_
+wandb:
+  mode: online
+  experiment: qei_scaling
+
+bo:
+  n_iters: 20
+  checkpoint: true
+  checkpoint_freq: 1
+
+n: 50000
+run_name: "qei_${hydra:runtime.choices.acquisition/sampler}_${acquisition.sampler.num_samples}"
+
+hydra:
+  mode: MULTIRUN
+  sweeper:
+    params:
+      dataset: zinc_250k
+      acquisition: qei
+      acquisition/sampler: iid,sobol
+      acquisition.sampler.num_samples: 16,64,256,512,1024
+      acqf_optimizer: pool_maximizer
+      acqf_optimizer.q: 50
+      model: tanimoto_gp
+      oracle: zinc_250k/qed
+      seed: range(0,3)
+  launcher:
+    timeout_min: 180
+    setup:
+      - module load python/3.11 rdkit/2024.09.6 cuda/12.6
+      - source ~/scratch/molbo/venv_rgfn/bin/activate
+    array_parallelism: 5
