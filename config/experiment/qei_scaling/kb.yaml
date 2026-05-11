@@ -20,6 +20,7 @@ hydra:
       acquisition/sampler: kb
       acqf_optimizer: pool_maximizer
       acqf_optimizer.q: 50
+      acqf_optimizer.max_batch_size: 128
       model: tanimoto_gp
       oracle: zinc250k/qed
       seed: range(0,3)
