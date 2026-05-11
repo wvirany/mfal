@@ -1,3 +1,4 @@
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Optional
@@ -21,12 +22,19 @@ class OptimizationResult:
     acq_val: torch.Tensor
     smiles: Optional[List[str]] = None
     metrics: dict = field(default_factory=dict)
+    optimization_time: Optional[float] = None
 
 
 class AcqfOptimizer(ABC):
 
-    @abstractmethod
     def optimize(self, acq_func: Acquisition, candidates: torch.Tensor = None) -> tuple:
+        start = time.perf_counter()
+        result = self._optimize(acq_func, candidates)
+        result.optimization_time = time.perf_counter() - start
+        return result
+
+    @abstractmethod
+    def _optimize(self, acq_func: Acquisition, candidates: torch.Tensor = None) -> tuple:
         pass
 
     @abstractmethod

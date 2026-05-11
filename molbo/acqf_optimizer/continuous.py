@@ -21,7 +21,7 @@ class ContinuousMaximizer(ContinuousBase):
         self.num_restarts = num_restarts
         self.raw_samples = raw_samples
 
-    def optimize(self, acq_func, candidates=None):
+    def _optimize(self, acq_func, candidates=None):
         if not hasattr(self, "bounds"):
             raise ValueError("bounds must be set before calling optimize")
         new_X, acq_val = optimize_acqf(
@@ -39,7 +39,7 @@ class ContinuousSampler(ContinuousBase):
         self.q = q
         self.n_samples = n_samples
 
-    def optimize(self, acq_func, candidates=None):
+    def _optimize(self, acq_func, candidates=None):
         X_grid = torch.linspace(
             self.bounds[0].item(),
             self.bounds[1].item(),

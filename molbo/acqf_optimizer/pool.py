@@ -28,7 +28,7 @@ class PoolBase(AcqfOptimizer):
 
 
 class PoolMaximizer(PoolBase):
-    def optimize(self, acq_func, candidates: torch.Tensor):
+    def _optimize(self, acq_func, candidates: torch.Tensor):
         new_X, acq_val = optimize_acqf_discrete(
             acq_function=acq_func.acq_func,
             q=self.q,
@@ -39,7 +39,7 @@ class PoolMaximizer(PoolBase):
 
 
 class PoolSampler(PoolBase):
-    def optimize(self, acq_func, candidates: torch.Tensor):
+    def _optimize(self, acq_func, candidates: torch.Tensor):
         with torch.no_grad():
             acq_values = torch.cat(
                 [
@@ -78,7 +78,7 @@ class PoolSampler(PoolBase):
 
 
 class ThompsonSampler(PoolBase):
-    def optimize(self, acq_func, candidates: torch.Tensor):
+    def _optimize(self, acq_func, candidates: torch.Tensor):
         selected_X = []
         selected_vals = []
         remaining = candidates
@@ -110,7 +110,7 @@ class ThompsonSampler(PoolBase):
 
 
 class TopKSelector(PoolBase):
-    def optimize(self, acq_func, candidates: torch.Tensor):
+    def _optimize(self, acq_func, candidates: torch.Tensor):
         with torch.no_grad():
             acq_values = torch.cat(
                 [
@@ -129,7 +129,7 @@ class TopKModesSelector(PoolBase):
         super().__init__(q=q, max_batch_size=max_batch_size)
         self.tanimoto_threshold = tanimoto_threshold
 
-    def optimize(self, acq_func, candidates: torch.Tensor):
+    def _optimize(self, acq_func, candidates: torch.Tensor):
         with torch.no_grad():
             acq_values = torch.cat(
                 [
@@ -164,7 +164,7 @@ class GreedySampler(AcqfOptimizer):
     def sample_init(self, oracle, n_init):
         return self.sampler.sample_init(oracle, n_init)
 
-    def optimize(self, acq_func, candidates: torch.Tensor):
+    def _optimize(self, acq_func, candidates: torch.Tensor):
         model = acq_func.model
         self.sampler_acquisition.update(model)
         self.selector_acquisition.update(model)
