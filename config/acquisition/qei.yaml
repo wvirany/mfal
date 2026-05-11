@@ -1,3 +1,4 @@
-_target_: molbo.acquisition.qEIAcquisition
+defaults:
+  - sampler: sobol
 
-num_samples: 512
+_target_: molbo.acquisition.qEIAcquisition

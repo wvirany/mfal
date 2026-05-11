@@ -1,0 +1,3 @@
+_target_: molbo.acquisition.monte_carlo.IIDNormalSampler
+
+num_samples: 512
