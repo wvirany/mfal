@@ -15,7 +15,7 @@ hydra:
   mode: MULTIRUN
   sweeper:
     params:
-      dataset: zinc_250k
+      dataset: zinc250k
       acquisition: qei
       acquisition/sampler: kb
       acqf_optimizer: pool_maximizer

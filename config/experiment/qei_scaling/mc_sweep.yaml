@@ -15,7 +15,7 @@ hydra:
   mode: MULTIRUN
   sweeper:
     params:
-      dataset: zinc_250k
+      dataset: zinc250k
       acquisition: qei
       acquisition/sampler: iid,sobol
       acquisition.sampler.num_samples: 16,64,256,512,1024
