@@ -7,9 +7,9 @@ from molbo.acqf_optimizer.base import AcqfOptimizer, Initialization, Optimizatio
 class ContinuousBase(AcqfOptimizer):
 
     def sample_init(self, oracle, n_init: int) -> Initialization:
-        bounds = oracle.bounds
-        train_X = bounds[0] + (bounds[1] - bounds[0]) * torch.rand(
-            n_init, bounds.shape[1], dtype=torch.float64
+        self.bounds = oracle.bounds
+        train_X = self.bounds[0] + (self.bounds[1] - self.bounds[0]) * torch.rand(
+            n_init, self.bounds.shape[1], dtype=torch.float64
         )
         train_y = oracle(train_X)
         return Initialization(train_X=train_X, train_y=train_y)
@@ -22,8 +22,6 @@ class ContinuousMaximizer(ContinuousBase):
         self.raw_samples = raw_samples
 
     def _optimize(self, acq_func, candidates=None):
-        if not hasattr(self, "bounds"):
-            raise ValueError("bounds must be set before calling optimize")
         new_X, acq_val = optimize_acqf(
             acq_function=acq_func.acq_func,
             bounds=self.bounds,

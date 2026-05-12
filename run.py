@@ -48,7 +48,6 @@ def main(cfg: DictConfig):
 
     # Instantiate other components
     acqf_optimizer = instantiate(cfg.acqf_optimizer)
-    acqf_optimizer.bounds = getattr(oracle, "bounds", None)
     acq_func = instantiate(cfg.acquisition)
     acq_func.candidates = candidates
     model = instantiate(cfg.model)
