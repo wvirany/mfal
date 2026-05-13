@@ -1,2 +1,3 @@
-from .bo_loop import BOLoop
-from .bo_metrics import BOMetrics
+from .bo import BOLoop
+from .history import History
+from .logger import Logger

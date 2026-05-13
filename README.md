@@ -20,7 +20,7 @@ from molbo.oracle import AnalyticOracle
 from molbo.model.gp import GPModel
 from molbo.acquisition.base import EIAcquisition
 from molbo.acqf_optimizer.continuous import ContinuousMaximizer
-from molbo.bo import BOLoop
+from molbo.bo import BOLoop, History
 
 def f(X):
     return torch.sin(X) + 0.1 * torch.randn_like(X)
@@ -34,10 +34,10 @@ init = optimizer.sample_init(oracle, n_init=5)
 
 model = GPModel()
 acq_func = EIAcquisition()
+history = History(X_init=init.train_X, y_init=init.train_y)
 
 bo_loop = BOLoop(
-    train_X=init.train_X,
-    train_y=init.train_y,
+    history=history,
     model=model,
     acq_func=acq_func,
     oracle=oracle,
@@ -54,7 +54,7 @@ from molbo.oracle.lookup import LookupOracle
 from molbo.model.gp import TanimotoGPModel
 from molbo.acquisition.base import EIAcquisition
 from molbo.acqf_optimizer.pool import PoolMaximizer
-from molbo.bo import BOLoop
+from molbo.bo import BOLoop, History
 from molbo.utils import smiles_to_morgan_fp
 
 smiles = [
@@ -67,7 +67,7 @@ smiles = [
 ]
 
 X = torch.stack([smiles_to_morgan_fp(smi) for smi in smiles])
-y = torch.randn(len(X), dtype=torch.float64).unsqueeze(-1)  # Requires explicit output dim
+y = torch.randn(len(X), dtype=torch.float64).unsqueeze(-1)
 
 oracle = LookupOracle(X_data=X, y_data=y)
 
@@ -76,16 +76,19 @@ init = optimizer.sample_init(oracle, n_init=2)
 
 model = TanimotoGPModel()
 acq_func = EIAcquisition()
+history = History(
+    X_init=init.train_X,
+    y_init=init.train_y,
+    observed_indices=init.observed_indices,
+)
 
 bo_loop = BOLoop(
-    train_X=init.train_X,
-    train_y=init.train_y,
+    history=history,
     model=model,
     acq_func=acq_func,
     oracle=oracle,
     acqf_optimizer=optimizer,
     candidates=X,
-    observed_indices=init.observed_indices,
     candidate_smiles=smiles,
 )
 bo_loop.run(n_iters=4)
@@ -163,3 +166,13 @@ Certain acquisition optimizers only work with specific acquisition functions:
 Moreover, the fixed-pool setting requires a `PoolMaximizer` or `PoolSampler`.
 
 `TSAcquisition` is not compatible with `TanimotoGPModel`.
+
+### Devices
+
+The device is determined by the oracle:
+
+```python
+oracle = AnalyticOracle(...).to(device)
+```
+
+Training data inherits the oracle's device via `sample_init`, and the model follows from the training data. No manual device management needed.
