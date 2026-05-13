@@ -21,7 +21,6 @@ class OptimizationResult:
     new_X: torch.Tensor
     acq_val: torch.Tensor
     smiles: Optional[List[str]] = None
-    metrics: dict = field(default_factory=dict)
     optimization_time: Optional[float] = None
 
 

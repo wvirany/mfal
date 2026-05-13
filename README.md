@@ -10,7 +10,7 @@ pip install -e .
 
 ## Examples
 
-Below are several examples for a quick introduction to using `molbo`. Further documentation can be found [here](#key-ingredients-of-a-boloop).
+Below are several examples for a quick introduction to using `molbo`. Further documentation can be found [below](#key-ingredients-of-a-boloop).
 
 ### Continuous optimization
 
@@ -102,12 +102,14 @@ bo_loop.run(n_iters=4)
 
 ## Key ingredients of a `BOLoop`
 
-A BO loop requires four key ingredients:
+A BO loop requires the following key ingredients:
 
 - **Oracle**: the objective function being optimized
 - **Surrogate model**: a probabilistic model of the objective
 - **Acquisition function**: scores candidates using model predictions
 - **Acquisition optimizer**: selects the next candidate(s) to evaluate
+- **History**: handles bookkeeping, metric computation, logging, checkpointing
+
 
 ### Oracles
 
@@ -119,12 +121,14 @@ An oracle wraps the objective function and handles evaluation. THree main types 
 
     Subclass and implement `_evaluate(smiles) -> (N, 1) tensor`. Example: `QEDOracle`.
 
+
 ### Surrogate models
 
 - `GPModel`: standard GP with RBF kernel; suitable for continuous domains
 - `TanimotoGPModel`: GP with Tanimoto kernel; the standard choice for molecular fingerprints
 
 Examples of alternative mean and covariance modules can be found at `molbo.model.modules`
+
 
 ### Acquisition functions
 
@@ -138,6 +142,7 @@ Batch acquisition functions are available in `molbo.acquisition.monte_carlo`:
 
 - `qEIAcquisition`: MC expected improvement with fantasy conditioning
 - `qUCBAcquisition`: MC upper confidence bound
+
 
 ### Acquisition optimizers
 
@@ -156,7 +161,42 @@ The acquisition optimizer determines how candidates are selected given the acqui
 For the generative setting, the `AcqfOptimizer` base class can be extended to allow for flexible implementations. As an example, we include the `MolGA` class (*coming soon*).
 
 
-### Notes:
+### History
+
+`History` tracks the state of a BO run — observations, metrics, logging, and checkpointing. It is constructed before the loop and passed in:
+
+```python
+from molbo.bo import History
+
+history = History(
+    X_init=init.train_X,
+    y_init=init.train_y,
+    metrics=[my_metric],           # optional: List[Callable[[History], dict]]
+    logger=WandBLogger(...),        # optional: logs metrics each iteration
+    checkpoint_path="run.pt",      # optional: saves to disk every checkpoint_freq iters
+    checkpoint_freq=10,
+)
+```
+
+Custom metrics can be added by passing callables of the form `f(history: History) -> dict`:
+
+```python
+def my_metric(history: History) -> dict:
+    ...
+    return {"metric_name": value}
+
+history = History(X_init=init.train_X, y_init=init.train_y, metrics=[my_metric])
+```
+
+To resume from a checkpoint, use `History.load()`:
+
+```python
+history = History.load("run.pt", metrics=[my_metric], logger=WandBLogger(...))
+history = history or History(X_init=init.train_X, y_init=init.train_y, ...)  # fresh if not found
+```
+
+
+## Additional Notes:
 
 Certain acquisition optimizers only work with specific acquisition functions:
 
@@ -167,7 +207,7 @@ Moreover, the fixed-pool setting requires a `PoolMaximizer` or `PoolSampler`.
 
 `TSAcquisition` is not compatible with `TanimotoGPModel`.
 
-### Devices
+## Devices
 
 The device is determined by the oracle:
 

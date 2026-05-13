@@ -9,7 +9,6 @@ description = "Bayesian optimization for molecules"
 requires-python = ">=3.8"
 dependencies = [
     "numpy",
-    "pandas",
     "rdkit",
     "torch",
     "gauche",
@@ -17,7 +16,6 @@ dependencies = [
     "botorch",
     "tqdm",
     "wandb",
-    "hydra-core"
 ]
 
 [project.optional-dependencies]
