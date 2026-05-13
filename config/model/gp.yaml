@@ -1,6 +1,0 @@
-defaults:
-  - mean_module: null
-  - covar_module: null
-  - noise_module: null
-
-_target_: molbo.model.GPModel

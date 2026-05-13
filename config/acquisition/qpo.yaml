@@ -1,4 +1,0 @@
-_target_: molbo.acquisition.ProbabilityOfOptimality
-
-n_representer_points: 500
-n_samples: 500

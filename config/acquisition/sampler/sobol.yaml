@@ -1,3 +1,0 @@
-_target_: molbo.acquisition.monte_carlo.SobolQMCNormalSampler
-
-num_samples: 512

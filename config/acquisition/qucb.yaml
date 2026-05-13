@@ -1,6 +1,0 @@
-defaults:
-  - sampler: sobol
-
-_target_: molbo.acquisition.qUCBAcquisition
-
-beta: 1.0

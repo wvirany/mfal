@@ -1,4 +1,0 @@
-_target_: molbo.acqf_optimizer.PoolSampler
-
-q: 1
-max_batch_size: 512
