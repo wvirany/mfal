@@ -153,7 +153,7 @@ The acquisition optimizer determines how candidates are selected given the acqui
 For the generative setting, the `AcqfOptimizer` base class can be extended to allow for flexible implementations. As an example, we include the `MolGA` class (*coming soon*).
 
 
-### Notes on combining modules:
+### Notes:
 
 Certain acquisition optimizers only work with specific acquisition functions:
 
@@ -161,3 +161,5 @@ Certain acquisition optimizers only work with specific acquisition functions:
 * `ContinuousSampler` and `PoolSampler` expect analytic acquisition functions
 
 Moreover, the fixed-pool setting requires a `PoolMaximizer` or `PoolSampler`.
+
+`TSAcquisition` is not compatible with `TanimotoGPModel`.

@@ -1,7 +1,6 @@
 import numpy as np
 import torch
-from rdkit import Chem
-from rdkit.Chem import AllChem, DataStructs
+from rdkit.Chem import DataStructs
 from rdkit.Chem.Scaffolds.MurckoScaffold import MurckoScaffoldSmiles
 
 from molbo.utils.helpers import get_centroid_indices, smiles_to_morgan_fp

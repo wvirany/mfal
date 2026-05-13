@@ -70,7 +70,7 @@ def branin(noise_std=0.0):
 
 def eggholder(noise_std=0.0):
     """Eggholder function (2D). Negated for maximization."""
-    fn = EggHolder(megate=True)
+    fn = EggHolder(negate=True)
     return AnalyticOracle(
         f=lambda X: fn(X),
         bounds=fn.bounds,
@@ -151,7 +151,7 @@ def shekel(noise_std=0.0):
 
 def six_hump_camel(noise_std=0.0):
     """Six-hump camel function (2D). Negated for maximization."""
-    fn = SixHumpCamel(megate=True)
+    fn = SixHumpCamel(negate=True)
     return AnalyticOracle(
         f=lambda X: fn(X),
         bounds=fn.bounds,
