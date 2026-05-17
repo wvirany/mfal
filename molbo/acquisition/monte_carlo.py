@@ -9,7 +9,6 @@ from botorch.sampling.normal import (
 )
 
 from molbo.acquisition import Acquisition
-from molbo.model.base import SurrogateModel
 
 
 class qEIAcquisition(Acquisition):
@@ -18,11 +17,10 @@ class qEIAcquisition(Acquisition):
     def __init__(self, sampler=None):
         self.sampler = sampler
 
-    def update(self, model: SurrogateModel):
-        self.model = model
-        self.best_f = model.train_y.max().item()
+    def _update(self):
+        self.best_f = self.model.train_y.max().item()
         self.acq_func = qExpectedImprovement(
-            model=model.model, best_f=self.best_f, sampler=self.sampler
+            model=self.model.model, best_f=self.best_f, sampler=self.sampler
         )
 
 
@@ -33,10 +31,9 @@ class qUCBAcquisition(Acquisition):
         self.beta = beta
         self.sampler = sampler
 
-    def update(self, model: SurrogateModel):
-        self.model = model
+    def _update(self):
         self.acq_func = qUpperConfidenceBound(
-            model=model.model, beta=self.beta, sampler=self.sampler
+            model=self.model.model, beta=self.beta, sampler=self.sampler
         )
 
 

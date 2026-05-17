@@ -113,7 +113,7 @@ A BO loop requires the following key ingredients:
 
 ### Oracles
 
-An oracle wraps the objective function and handles evaluation. THree main types are supported, corresponding to each example setting:
+An oracle wraps the objective function and handles evaluation. Three main types are supported, corresponding to each example setting:
 
 - `AnalyticOracle`: for continuous domains; takes a callable `f` and `bounds`
 - `LookupOracle`: for fixed candidate pools; evaluates via hash map lookup
