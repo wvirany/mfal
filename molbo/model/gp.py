@@ -86,10 +86,6 @@ class GPModel(SurrogateModel):
         self.train_X = torch.cat([self.train_X, self.featurizer(new_X)])
         self.train_y = torch.cat([self.train_y, new_y])
 
-    def _check_fitted(self):
-        if not self.is_fitted:
-            raise RuntimeError("Model has not been fit. Call fit() before predicting.")
-
     def __call__(self, X):
         self._check_fitted()
         self.model.eval()
@@ -105,6 +101,10 @@ class GPModel(SurrogateModel):
             return self.mll(output, self.train_y.squeeze())
 
     @property
+    def is_fitted(self):
+        return self.model is not None
+
+    @property
     def _input_transform(self):
         """Return SingleTaskGP input_transform if it exists, else None"""
         return getattr(self.model, "input_transform", None)
@@ -113,10 +113,6 @@ class GPModel(SurrogateModel):
     def _outcome_transform(self):
         """Return SingleTaskGP outcome_transform if it exists, else None"""
         return getattr(self.model, "outcome_transform", None)
-
-    @property
-    def is_fitted(self):
-        return self.model is not None
 
 
 class TanimotoGP(SingleTaskGP):
