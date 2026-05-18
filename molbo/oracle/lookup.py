@@ -5,9 +5,8 @@ from molbo.oracle.base import Oracle
 
 class LookupOracle(Oracle):
     """
-    Oracle for fixed candidate pools with pre-computed values implemented as a lookup table.
-
-    Assumes a maximization problem. Currently assumes output dim is 1.
+    Oracle for fixed-pool optimization. Candidates must be pre-featurized by the user
+    before passing as X_data. A molbo Featurizer object can be used for this.
     """
 
     def __init__(self, X_data, y_data, top_k=[0.01], noise_std=0.0):
@@ -30,25 +29,7 @@ class LookupOracle(Oracle):
         self.threshold_labels = {k: f"top{round(k * 100)}" for k in top_k}
         self.n_top_k = {k: (y_data >= self.thresholds[k]).sum().item() for k in top_k}
 
-        self._hash_to_idx = {hash(row.numpy().tobytes()): i for i, row in enumerate(X_data)}
-
-    def _evaluate(self, X):
-        """
-        Look up values for X in stored dataset.
-
-        Args:
-            X: (B, d) tensor
-
-        Returns:
-            y: (B, m) tensor
-
-        Shapes:
-            X: (B, d)
-            X_data: (N, d)
-            indices: (B,)
-            y_data[indices]: (B, m)
-        """
-        indices = [self._hash_to_idx[hash(row.cpu().numpy().tobytes())] for row in X]
+    def _evaluate(self, indices):
         return self.y_data[indices]
 
     def __getitem__(self, idx):
@@ -60,8 +41,6 @@ class LookupOracle(Oracle):
 
     @property
     def optimal_value(self):
-        if self._optimal_value is None:
-            raise ValueError("Optimal value not set. Either set during init or compute manually.")
         return self._optimal_value
 
     def to(self, device):
