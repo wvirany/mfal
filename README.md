@@ -19,7 +19,7 @@ molbo is easy to use! It just requires the following key ingredients:
 - **History**: handles bookkeeping, metric computation, logging, checkpointing
 
 
-molbo is built on top of BoTorch and supports three optimization settings, each defined by a specific oracle and acquisition optimizer pairing.
+molbo is built on top of BoTorch and supports three optimization settings, each defined by a specific oracle and acquisition optimizer pairing:
 
 **Continuous setting:** in the continuous setting, `AnalyticOracle` wraps a differentiable function and `ContinuousMaximizer` optimizes the acquisition function via gradient-based optimization over a bounded domain.
 
@@ -31,7 +31,7 @@ Across all three settings, the surrogate model and acquisition function are wrap
 
 The following demonstrates several examples for a quick introduction to using `molbo`. Further documentation can be found [below](#key-ingredients-of-a-boloop).
 
-### Continuous optimization
+### Continuous BO
 
 ```python
 import torch
@@ -64,7 +64,7 @@ bo_loop = BOLoop(
 bo_loop.run(n_iters=20)
 ```
 
-### Fixed-pool molecular optimization
+### Fixed-pool BO
 
 ```python
 import torch
@@ -113,7 +113,7 @@ bo_loop = BOLoop(
 bo_loop.run(n_iters=4)
 ```
 
-### Generative molecular optimization
+### Generative BO
 
 ```python
 # Coming soon
