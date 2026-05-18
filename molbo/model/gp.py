@@ -10,7 +10,7 @@ from gauche.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from molbo.model import SurrogateModel
-from molbo.model.featurizer import Featurizer, IdentityFeaturizer, MorganFingerprintFeaturizer
+from molbo.model.featurizer import Featurizer, IdentityFeaturizer
 from molbo.model.modules import FixedNoise, FixedObservationMean, FixedRBFKernel
 
 warnings.filterwarnings("ignore")
@@ -131,20 +131,13 @@ class TanimotoGP(SingleTaskGP):
 
 
 class TanimotoGPModel(GPModel):
-    """Wrapper for TanimotoGP model.
+    """GP surrogate model with a Tanimoto kernel.
 
-    Defaults to Morgan fingerprint featurizer.
+    Expects pre-featurized inputs (e.g. Morgan fingerprints) by default.
+    To featurize SMILES automatically, pass a featurizer explicitly:
+
+    model = TanimotoGPModel(featurizer=MorganFingerprintFeaturizer())
     """
-
-    def __init__(
-        self, mean_module=None, covar_module=None, noise_module=None, featurizer: Featurizer = None
-    ):
-        super().__init__(
-            mean_module=mean_module,
-            covar_module=covar_module,
-            noise_module=noise_module,
-            featurizer=featurizer or MorganFingerprintFeaturizer(),
-        )
 
     def _build_model(self):
         return TanimotoGP(self.train_X, self.train_y, mean_module=self.mean_module)

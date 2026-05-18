@@ -3,10 +3,9 @@ import torch
 from botorch.optim import optimize_acqf_discrete as botorch_optimize_acqf_discrete
 
 from molbo.acqf_optimizer.pool import PoolMaximizer, PoolSampler, _optimize_acqf_discrete
-from molbo.acquisition.base import EIAcquisition
-from molbo.acquisition.monte_carlo import qEIAcquisition
+from molbo.acquisition.base import LogEIAcquisition
+from molbo.acquisition.monte_carlo import qLogEIAcquisition
 from molbo.bo import BOLoop, History
-from molbo.model.featurizer import IdentityFeaturizer
 from molbo.model.gp import TanimotoGPModel
 from molbo.oracle.lookup import LookupOracle
 
@@ -32,10 +31,10 @@ def oracle(candidates):
 @pytest.fixture
 def ei(candidates, oracle):
     """Analytic EI — deterministic, for q=1 comparisons."""
-    model = TanimotoGPModel(featurizer=IdentityFeaturizer())
+    model = TanimotoGPModel()
     model.initialize(candidates[:N_INIT], oracle.y_data[:N_INIT])
     model.fit()
-    acq = EIAcquisition()
+    acq = LogEIAcquisition()
     acq.update(model)
     return acq
 
@@ -43,10 +42,10 @@ def ei(candidates, oracle):
 @pytest.fixture
 def qei(candidates, oracle):
     """MC qEI — supports X_pending, for q>1 comparisons."""
-    model = TanimotoGPModel(featurizer=IdentityFeaturizer())
+    model = TanimotoGPModel()
     model.initialize(candidates[:N_INIT], oracle.y_data[:N_INIT])
     model.fit()
-    acq = qEIAcquisition()
+    acq = qLogEIAcquisition()
     acq.update(model)
     return acq
 
@@ -63,8 +62,8 @@ def _build_loop(candidates, oracle, optimizer, checkpoint_path=None):
     return (
         BOLoop(
             history=history,
-            model=TanimotoGPModel(featurizer=IdentityFeaturizer()),
-            acq_func=qEIAcquisition(),
+            model=TanimotoGPModel(),
+            acq_func=qLogEIAcquisition(),
             oracle=oracle,
             acqf_optimizer=optimizer,
             candidates=candidates,
@@ -189,8 +188,8 @@ class TestBOLoopPool:
 
         loop2 = BOLoop(
             history=history2,
-            model=TanimotoGPModel(featurizer=IdentityFeaturizer()),
-            acq_func=qEIAcquisition(),
+            model=TanimotoGPModel(),
+            acq_func=qLogEIAcquisition(),
             oracle=oracle,
             acqf_optimizer=PoolMaximizer(q=1),
             candidates=candidates,

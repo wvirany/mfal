@@ -3,7 +3,7 @@
 import torch
 
 from molbo.acqf_optimizer.continuous import ContinuousMaximizer
-from molbo.acquisition.base import EIAcquisition
+from molbo.acquisition.base import LogEIAcquisition
 from molbo.bo import BOLoop, History
 from molbo.model.gp import GPModel
 from molbo.oracle import AnalyticOracle
@@ -27,7 +27,7 @@ def test_continuous_run_completes():
     bo_loop = BOLoop(
         history=history,
         model=GPModel(),
-        acq_func=EIAcquisition(),
+        acq_func=LogEIAcquisition(),
         oracle=oracle,
         acqf_optimizer=optimizer,
     )
@@ -58,7 +58,7 @@ def test_continuous_resume(tmp_path):
     BOLoop(
         history=history,
         model=GPModel(),
-        acq_func=EIAcquisition(),
+        acq_func=LogEIAcquisition(),
         oracle=oracle,
         acqf_optimizer=optimizer,
     ).run(n_iters=6)
@@ -71,7 +71,7 @@ def test_continuous_resume(tmp_path):
     BOLoop(
         history=resumed,
         model=GPModel(),
-        acq_func=EIAcquisition(),
+        acq_func=LogEIAcquisition(),
         oracle=oracle,
         acqf_optimizer=optimizer,
     ).run(n_iters=10)

@@ -1,4 +1,5 @@
 import torch
+from botorch.acquisition.logei import qLogExpectedImprovement
 from botorch.acquisition.monte_carlo import qExpectedImprovement, qUpperConfidenceBound
 from botorch.sampling.base import MCSampler
 from botorch.sampling.normal import (
@@ -12,7 +13,7 @@ from molbo.acquisition import Acquisition
 
 
 class qEIAcquisition(Acquisition):
-    """Monte Carlo expected improvement acquisition function."""
+    """Monte Carlo Expected Improvement acquisition function."""
 
     def __init__(self, sampler=None):
         self.sampler = sampler
@@ -24,8 +25,21 @@ class qEIAcquisition(Acquisition):
         )
 
 
+class qLogEIAcquisition(Acquisition):
+    """Monte Carlo Log Expected Improvement acquisition function."""
+
+    def __init__(self, sampler=None):
+        self.sampler = sampler
+
+    def _update(self):
+        self.best_f = self.model.train_y.max().item()
+        self.acq_func = qLogExpectedImprovement(
+            model=self.model.model, best_f=self.best_f, sampler=self.sampler
+        )
+
+
 class qUCBAcquisition(Acquisition):
-    """Monte Carlo UCB acquisition function."""
+    """Monte Carlo Upper Confidence Bound acquisition function."""
 
     def __init__(self, beta: float = 1.0, sampler=None):
         self.beta = beta

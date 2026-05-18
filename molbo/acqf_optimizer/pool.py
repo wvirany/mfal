@@ -103,7 +103,7 @@ class PoolSampler(PoolBase):
             print(
                 "Warning: all acquisition values are zero after clamping; falling back to uniform sampling"
             )
-            probs = torch.ones(len(candidates), device=candidates.device) / len(candidates)
+            probs = torch.ones(len(available), device=candidates.device) / len(available)
         else:
             probs = acq_clamped / acq_clamped.sum()
 

@@ -69,13 +69,13 @@ def test_gpmodel_loss_runs():
 
 
 def test_tanimoto_default_featurizer():
-    model = TanimotoGPModel()
+    model = TanimotoGPModel(featurizer=MorganFingerprintFeaturizer())
     assert isinstance(model.featurizer, MorganFingerprintFeaturizer)
 
 
 def test_tanimoto_accepts_smiles():
     """The model takes identity-space SMILES and featurizes internally."""
-    model = TanimotoGPModel()
+    model = TanimotoGPModel(featurizer=MorganFingerprintFeaturizer())
     model.initialize(SMILES, MOL_Y)
     model.fit()
 
@@ -89,7 +89,7 @@ def test_tanimoto_accepts_smiles():
 
 
 def test_tanimoto_update_with_smiles():
-    model = TanimotoGPModel()
+    model = TanimotoGPModel(featurizer=MorganFingerprintFeaturizer())
     model.initialize(SMILES, MOL_Y)
     model.fit()
     model.update(SMILES_NEW, MOL_Y_NEW)
