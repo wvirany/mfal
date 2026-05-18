@@ -23,7 +23,6 @@ class BOLoop:
         oracle: Oracle
         acqf_optimizer: Acquisition function optimizer
         candidates: (N, d) candidate pool for fixed-pool optimization (optional)
-        candidate_smiles: SMILES strings corresponding to candidates (optional)
         device: Device for oracle evaluations
     """
 
@@ -35,7 +34,6 @@ class BOLoop:
         oracle: Oracle,
         acqf_optimizer: AcqfOptimizer,
         candidates: Optional[torch.Tensor] = None,
-        candidate_smiles: Optional[list] = None,
         device: str = "cpu",
     ):
         self.history = history
@@ -44,17 +42,13 @@ class BOLoop:
         self.oracle = oracle
         self.acqf_optimizer = acqf_optimizer
         self.candidates = candidates
-        self.candidate_smiles = candidate_smiles
         self.device = device
 
         # Initialize model from all data seen so far (handles fresh start and resume)
-        self.model.initialize(history.X_all.to(device), history.y_all.to(device))
-
-        # Pool setting: build candidates mask, accounting for already-observed indices on resume
-        if candidates is not None:
-            self.candidates_mask = torch.ones(len(candidates), dtype=torch.bool)
-            if history.observed_indices:
-                self.candidates_mask[history.observed_indices] = False
+        X_all = history.X_all
+        self.model.initialize(
+            X_all.to(device) if torch.is_tensor(X_all) else X_all, history.y_all.to(device)
+        )
 
     def run(self, n_iters: int) -> History:
         for i in tqdm(
@@ -71,24 +65,14 @@ class BOLoop:
             # Pool-based
             if self.candidates is not None:
                 result = self.acqf_optimizer.optimize(
-                    self.acq_func, self.candidates[self.candidates_mask]
+                    self.acq_func, self.candidates, observed_indices=self.history.observed_indices
                 )
-                hash_idxs = [hash(x.cpu().numpy().tobytes()) for x in result.new_X]
-                global_idxs = [self.oracle._hash_to_idx[h] for h in hash_idxs]
-                new_y = self.oracle[global_idxs][1]
-                if new_y.dim() == 1:
-                    new_y = new_y.unsqueeze(-1)
-                self.candidates_mask[global_idxs] = False
-                if self.candidate_smiles is not None:
-                    result.smiles = [self.candidate_smiles[idx] for idx in global_idxs]
+                new_y = self.oracle(result.observed_indices).to(self.device)
 
             # Continuous / generative
             else:
                 result = self.acqf_optimizer.optimize(self.acq_func)
-                if result.smiles is not None:
-                    new_y = self.oracle(result.smiles).to(self.device)
-                else:
-                    new_y = self.oracle(result.new_X).to(self.device)
+                new_y = self.oracle(result.new_X).to(self.device)
 
             # Update model
             self.model.update(result.new_X, new_y)
@@ -99,5 +83,5 @@ class BOLoop:
                 new_y=new_y,
                 model_loss=self.model.loss().item(),
                 iteration=i,
-                observed_indices=global_idxs if self.candidates is not None else None,
+                observed_indices=result.observed_indices,
             )

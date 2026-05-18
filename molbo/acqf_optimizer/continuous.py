@@ -21,7 +21,7 @@ class ContinuousMaximizer(ContinuousBase):
         self.num_restarts = num_restarts
         self.raw_samples = raw_samples
 
-    def _optimize(self, acq_func, candidates=None):
+    def _optimize(self, acq_func, candidates=None, observed_indices=None):
         new_X, acq_val = optimize_acqf(
             acq_function=acq_func.acq_func,
             bounds=self.bounds,
@@ -37,7 +37,7 @@ class ContinuousSampler(ContinuousBase):
         self.q = q
         self.n_samples = n_samples
 
-    def _optimize(self, acq_func, candidates=None):
+    def _optimize(self, acq_func, candidates=None, observed_indices=None):
         X_grid = torch.linspace(
             self.bounds[0].item(),
             self.bounds[1].item(),

@@ -1,12 +1,23 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 import torch
 
 from molbo.acqf_optimizer.base import OptimizationResult
 from molbo.bo.logger import Logger
+
+
+def _concat(a: Any, b: Any) -> Any:
+    """Append ``b`` onto ``a`` in whatever representation ``a`` uses.
+
+    Tensors are concatenated (with ``b`` detached and moved to CPU); lists
+    (e.g. SMILES strings) are extended.
+    """
+    if torch.is_tensor(a):
+        return torch.cat([a, b.detach().cpu()])
+    return list(a) + list(b)
 
 
 class History:
@@ -15,9 +26,13 @@ class History:
     Handles observation storage, metrics computation, logging, and checkpointing.
     Subclass and pass metric callables to add setting-specific metrics.
 
-    Metric callables have signature ``Callable[[History], dict]`` — they receive
+    Metric callables have signature ``Callable[[History], dict]`` - they receive
     the full history after each update and return a dict of metric names to values.
     External state (e.g. a GFN model) can be captured via closures.
+
+    Candidate inputs (``X_init``, ``X_observed``) are representation-agnostic:
+    feature tensors for continuous domains, or lists of general representations
+    (e.g. SMILES).
 
     Args:
         X_init: ``(n_init, d)`` initial training inputs
@@ -31,7 +46,7 @@ class History:
 
     def __init__(
         self,
-        X_init: torch.Tensor,
+        X_init: Any,
         y_init: torch.Tensor,
         observed_indices: Optional[List[int]] = None,
         metrics: Optional[List[Callable]] = None,
@@ -47,8 +62,8 @@ class History:
         self.checkpoint_path = checkpoint_path
         self.checkpoint_freq = checkpoint_freq
 
-        # Accumulated during run
-        self.X_observed = torch.tensor([], dtype=X_init.dtype)
+        # Accumulated during run. X_observed mirrors the representation of X_init.
+        self.X_observed = [] if isinstance(X_init, list) else torch.tensor([], dtype=X_init.dtype)
         self.y_observed = torch.tensor([], dtype=y_init.dtype)
         self.acq_vals = []
         self.iteration = []
@@ -76,8 +91,8 @@ class History:
             observed_indices: Global pool indices of evaluated candidates (pool setting only)
         """
         # Append observations
-        self.X_observed = torch.cat([self.X_observed, result.new_X.detach().cpu()])
-        self.y_observed = torch.cat([self.y_observed, new_y.detach().cpu()])
+        self.X_observed = _concat(self.X_observed, result.new_X)
+        self.y_observed = _concat(self.y_observed, new_y)
 
         # Scalar bookkeeping
         self.acq_vals.extend(result.acq_val.reshape(-1).tolist())
@@ -110,9 +125,9 @@ class History:
         return len(self.iteration)
 
     @property
-    def X_all(self) -> torch.Tensor:
+    def X_all(self) -> Any:
         """All observed inputs: init + BO iterations."""
-        return torch.cat([self.X_init, self.X_observed])
+        return _concat(self.X_init, self.X_observed)
 
     @property
     def y_all(self) -> torch.Tensor:
