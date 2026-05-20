@@ -39,9 +39,6 @@ __pycache__/
 *.db
 *.npz
 
-# Embeddings cache
-molbo/data/embeddings/
-
 # Results
 *.png
 *.pdf
