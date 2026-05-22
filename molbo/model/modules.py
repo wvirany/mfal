@@ -7,8 +7,6 @@ These don't get updated when fit() is called by BOLoop, but are updated by GPMod
 import gpytorch
 import torch
 
-torch.set_default_dtype(torch.float64)
-
 
 class FixedObservationMean(gpytorch.means.ConstantMean):
     def __init__(self):

@@ -40,11 +40,12 @@ class MorganFingerprintFeaturizer(Featurizer):
         fp_size: Fingerprint length in bits.
     """
 
-    def __init__(self, radius: int = 2, fp_size: int = 2048):
+    def __init__(self, radius: int = 2, fp_size: int = 2048, device: str = "cpu"):
         self.radius = radius
         self.fp_size = fp_size
+        self.device = device
 
     def __call__(self, X: List[str]) -> torch.Tensor:
         return torch.stack(
             [smiles_to_morgan_fp(smiles, radius=self.radius, fp_size=self.fp_size) for smiles in X]
-        )
+        ).to(self.device)
