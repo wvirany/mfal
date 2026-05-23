@@ -3,12 +3,11 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import rdFingerprintGenerator
 
 
-# Compute ECFP4 fingerprints:
-def smiles_to_morgan_fp(smiles: str, as_tensor: bool = True, radius: int = 2, fp_size: int = 2048):
-    # Return fingerprint as numpy array
-    mol = Chem.MolFromSmiles(smiles)
+def morgan_fp(x: str | Chem.Mol, as_tensor: bool = True, radius: int = 2, fp_size: int = 2048):
+    """Compute Morgan fingerprint from SMILES or RDKit Mol object."""
+    mol = Chem.MolFromSmiles(x) if isinstance(x, str) else x
     if mol is None:
-        raise ValueError(f"Invalid SMILES string: {smiles}")
+        raise ValueError(f"Invalid input: {x}")
 
     fp_gen = rdFingerprintGenerator.GetMorganGenerator(radius=radius, fpSize=fp_size)
 
@@ -19,7 +18,7 @@ def smiles_to_morgan_fp(smiles: str, as_tensor: bool = True, radius: int = 2, fp
 
 
 def get_centroid_indices(smiles_list, scores, tanimoto_threshold=0.7):
-    fps = [smiles_to_morgan_fp(s, as_tensor=False) for s in smiles_list]
+    fps = [morgan_fp(s, as_tensor=False) for s in smiles_list]
     sorted_indices = torch.argsort(scores, descending=True)
     centroids = []  # list of (fp, idx)
 
