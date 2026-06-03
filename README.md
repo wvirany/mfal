@@ -29,7 +29,7 @@ molbo is built on top of BoTorch and supports three optimization settings, each 
 
 Across all three settings, the surrogate model and acquisition function are wrappers built on BoTorch objects which operate on tensors. It is up to the user to define how objects are featurized into tensors.
 
-The following demonstrates several examples for a quick introduction to using `molbo`. Further documentation can be found [below](#key-ingredients-of-a-boloop).
+The following demonstrates several examples for a quick introduction to using `molbo`. Further documentation can be found below.
 
 ### Continuous BO
 
@@ -128,7 +128,7 @@ An oracle wraps the objective function and handles evaluation. Three main types 
 
 - `AnalyticOracle`: for continuous domains; takes a callable `f` and `bounds`
 - `LookupOracle`: for fixed candidate pools; evaluates by indexing into a pre-featurized list of candidates
-- `MolecularOracle`: for general molecular optimization; takes SMILES strings as input — subclass and implement `_evaluate(smiles) -> (N, 1) tensor`
+- `MolecularOracle`: for general molecular optimization; takes SMILES strings as input - subclass and implement `_evaluate(smiles) -> (N, 1) tensor`
 
 ```python
 from molbo.oracle import AnalyticOracle
@@ -236,7 +236,7 @@ optimizer = PoolSampler(q=1)    # samples proportional to acquisition values
 
 ### History
 
-`History` tracks the state of a BO run — observations, metrics, logging, and checkpointing:
+`History` tracks the state of a BO run - observations, metrics, logging, and checkpointing:
 
 ```python
 from molbo.bo import History

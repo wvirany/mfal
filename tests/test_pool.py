@@ -30,7 +30,7 @@ def oracle(candidates):
 
 @pytest.fixture
 def ei(candidates, oracle):
-    """Analytic EI — deterministic, for q=1 comparisons."""
+    """Analytic EI - deterministic, for q=1 comparisons."""
     model = TanimotoGPModel()
     model.initialize(candidates[:N_INIT], oracle.y_data[:N_INIT])
     model.fit()
@@ -41,7 +41,7 @@ def ei(candidates, oracle):
 
 @pytest.fixture
 def qei(candidates, oracle):
-    """MC qEI — supports X_pending, for q>1 comparisons."""
+    """MC qEI - supports X_pending, for q>1 comparisons."""
     model = TanimotoGPModel()
     model.initialize(candidates[:N_INIT], oracle.y_data[:N_INIT])
     model.fit()

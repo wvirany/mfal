@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 import torch
+from rdkit import Chem
 
 from molbo.utils.helpers import morgan_fp
 
@@ -33,18 +33,19 @@ class IdentityFeaturizer(Featurizer):
 
 
 class MorganFingerprintFeaturizer(Featurizer):
-    """Featurizes SMILES strings into Morgan count fingerprints.
+    """Featurizes molecules into Morgan fingerprints.
+
+    Accepts SMILES strings or RDKit Mol objects. Default is count-based fingerprints;
+    see morgan_fp().
 
     Args:
         radius: Morgan radius (default 2, i.e. ECFP4).
         fp_size: Fingerprint length in bits.
     """
 
-    def __init__(self, radius: int = 2, fp_size: int = 2048, device: str = "cpu"):
+    def __init__(self, radius: int = 2, fp_size: int = 2048):
         self.radius = radius
         self.fp_size = fp_size
 
-    def __call__(self, X: List[str]) -> torch.Tensor:
-        return torch.stack(
-            [morgan_fp(smiles, radius=self.radius, fp_size=self.fp_size) for smiles in X]
-        )
+    def __call__(self, X: list[str | Chem.Mol]) -> torch.Tensor:
+        return torch.stack([morgan_fp(x, radius=self.radius, fp_size=self.fp_size) for x in X])

@@ -62,7 +62,7 @@ class SobolQMCNormalSampler(BotorchSobolQMCNormalSampler):
 
 
 class KBSampler(MCSampler):
-    """Kriging Believer sampler — returns posterior mean as a single deterministic fantasy."""
+    """Kriging Believer sampler - returns posterior mean as a single deterministic fantasy."""
 
     def __init__(self):
         super().__init__(sample_shape=torch.Size([1]))
