@@ -68,6 +68,7 @@ class History:
         self.acq_vals = []
         self.iteration = []
         self.model_loss = []
+        self.optimization_time = []
 
     # ------------------------------------------------------------------
     # Core update
@@ -98,13 +99,14 @@ class History:
         self.acq_vals.extend(result.acq_val.reshape(-1).tolist())
         self.iteration.append(iteration)
         self.model_loss.append(model_loss)
+        self.optimization_time.append(result.optimization_time)
 
         # Pool-setting indices
         if observed_indices is not None:
             self.observed_indices.extend(observed_indices)
 
         # Compute and log metrics
-        metrics_dict = {"iteration": iteration}
+        metrics_dict = {"iteration": iteration, "optimization_time": result.optimization_time}
         for metric_fn in self.metrics:
             metrics_dict.update(metric_fn(self))
 
@@ -157,6 +159,7 @@ class History:
                 "acq_vals": self.acq_vals,
                 "iteration": self.iteration,
                 "model_loss": self.model_loss,
+                "optimization_time": self.optimization_time,
                 "rng_state": torch.get_rng_state(),
                 "cuda_rng_state": (
                     torch.cuda.get_rng_state() if torch.cuda.is_available() else None
@@ -193,5 +196,6 @@ class History:
         history.acq_vals = data["acq_vals"]
         history.iteration = data["iteration"]
         history.model_loss = data["model_loss"]
+        history.optimization_time = data["optimization_time"]
 
         return history
