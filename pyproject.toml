@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "molbo"
 version = "0.3.1"
 description = "Bayesian optimization for molecules"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 dependencies = [
     "torch",
     "botorch",
@@ -28,7 +28,7 @@ include = ["molbo*"]
 
 [tool.black]
 line-length = 100
-target-version = ['py38']
+target-version = ['py311']
 
 [tool.ruff]
 line-length = 100
@@ -46,6 +46,6 @@ lint.ignore = [
 ]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_unused_configs = true
 ignore_missing_imports = true
