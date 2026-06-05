@@ -4,8 +4,10 @@ A lightweight Bayesian optimization library for molecular design.
 
 ## Installation
 
+Install the latest version:
+
 ```bash
-pip install -e .
+pip install git+https://github.com/wvirany/molbo
 ```
 
 ## Usage
@@ -274,3 +276,7 @@ oracle = AnalyticOracle(...).to(device)
 ```
 
 Training data inherits the oracle's device via `sample_init`, and the model follows from the training data.
+
+## Data types
+
+molbo does not set a global default dtype. However, GP fitting relies on `torch.float64` for numerical stability. Thus, all molbo components are expected to be set to `torch.float64`.
