@@ -26,7 +26,7 @@ class LookupOracle(Oracle):
         self._optimal_value = y_data.max().item()
 
         self.thresholds = {k: torch.quantile(y_data, 1 - k).item() for k in top_k}
-        self.threshold_labels = {k: f"top{round(k * 100)}" for k in top_k}
+        self.threshold_labels = {k: f"top{k * 100:g}pct" for k in top_k}
         self.n_top_k = {k: (y_data >= self.thresholds[k]).sum().item() for k in top_k}
 
     def _evaluate(self, indices):
