@@ -17,7 +17,7 @@ class Featurizer(ABC):
 
     @abstractmethod
     def __call__(self, X) -> torch.Tensor:
-        """Featurize a batch of candidates into an ``(n, d)`` tensor."""
+        """Featurize a batch of candidates into an (n, d) tensor."""
         ...
 
 

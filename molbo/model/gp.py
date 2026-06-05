@@ -112,7 +112,7 @@ class GPModel(SurrogateModel):
 
     @property
     def parameters(self):
-        """Named GP parameters (name -> value), for inspection."""
+        """Named GP parameters (name -> value)."""
         self._check_fitted()
         return dict(self.model.named_parameters())
 

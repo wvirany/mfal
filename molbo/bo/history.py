@@ -10,10 +10,9 @@ from molbo.bo.logger import Logger
 
 
 def _concat(a: Any, b: Any) -> Any:
-    """Append ``b`` onto ``a`` in whatever representation ``a`` uses.
+    """Append b onto a in whatever representation a uses.
 
-    Tensors are concatenated (with ``b`` detached and moved to CPU); lists
-    (e.g. SMILES strings) are extended.
+    Tensors are concatenated (with b detached and moved to CPU); lists (e.g. SMILES strings) are extended.
     """
     if torch.is_tensor(a):
         return torch.cat([a, b.detach().cpu()])
@@ -24,23 +23,20 @@ class History:
     """Stores and manages the history of a BO run.
 
     Handles observation storage, metrics computation, logging, and checkpointing.
-    Subclass and pass metric callables to add setting-specific metrics.
 
-    Metric callables have signature ``Callable[[History], dict]`` - they receive
-    the full history after each update and return a dict of metric names to values.
-    External state (e.g. a GFN model) can be captured via closures.
+    Metric callables have signature Callable[[History], dict]: they receive the
+    full history after each update and return a dict of (metric_name, value) pairs.
 
-    Candidate inputs (``X_init``, ``X_observed``) are representation-agnostic:
-    feature tensors for continuous domains, or lists of general representations
-    (e.g. SMILES).
+    Candidate inputs (X_init, X_observed) are representation-agnostic: feature tensors
+    for continuous domains, or lists of general representations (e.g. SMILES).
 
     Args:
-        X_init: ``(n_init, d)`` initial training inputs
-        y_init: ``(n_init, 1)`` initial training targets
+        X_init: (n_init, d) initial training inputs
+        y_init: (n_init, 1) initial training targets
         observed_indices: Pool indices of initial observations (pool setting only)
-        metrics: List of callables ``f(history) -> dict`` to compute each iteration
+        metrics: List of callables f(history) -> dict to compute each iteration
         logger: Logger instance for live logging
-        checkpoint_path: If set, save history to this path every ``checkpoint_freq`` iterations
+        checkpoint_path: If set, save history to this path every checkpoint_freq iterations
         checkpoint_freq: How often to checkpoint (in iterations)
     """
 
@@ -85,11 +81,11 @@ class History:
         """Update history with the results of one BO iteration.
 
         Args:
-            result: Output of ``AcqfOptimizer.optimize()``
-            new_y: ``(q, 1)`` oracle evaluations for the proposed candidates
-            model_loss: Current model MLL loss
+            result: Output of AcqfOptimizer.optimize()
+            new_y: (q, 1) oracle evaluations for the proposed candidates
+            model_loss: Current model MLL
             iteration: Current iteration index
-            observed_indices: Global pool indices of evaluated candidates (pool setting only)
+            observed_indices: Indices of evaluated candidates (pool setting only)
         """
         # Append observations
         self.X_observed = _concat(self.X_observed, result.new_X)
@@ -172,7 +168,7 @@ class History:
     def load(cls, path: Path, **kwargs) -> Optional[History]:
         """Load history from disk and restore RNG state.
 
-        Additional keyword arguments are forwarded to ``__init__`` (e.g. metrics, logger).
+        Additional keyword arguments are forwarded to __init__ (e.g. metrics, logger).
         Returns None if the checkpoint does not exist.
         """
         path = Path(path)
