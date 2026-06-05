@@ -30,12 +30,18 @@ class GPModel(SurrogateModel):
     """
 
     def __init__(
-        self, mean_module=None, covar_module=None, noise_module=None, featurizer: Featurizer = None
+        self,
+        mean_module=None,
+        covar_module=None,
+        noise_module=None,
+        featurizer: Featurizer = None,
+        normalize: bool = True,
     ):
         self.mean_module = mean_module
         self.covar_module = covar_module
         self.noise_module = noise_module
         self.featurizer = featurizer or IdentityFeaturizer()
+        self.normalize = normalize
         self.model = None
 
     def initialize(self, train_X, train_y, state_dict=None):
@@ -51,7 +57,7 @@ class GPModel(SurrogateModel):
             self.train_y,
             mean_module=self.mean_module,
             covar_module=self.covar_module,
-            input_transform=Normalize(d=self.train_X.shape[-1]),
+            input_transform=Normalize(d=self.train_X.shape[-1]) if self.normalize else None,
         )
 
     def fit(self):
@@ -103,6 +109,12 @@ class GPModel(SurrogateModel):
     @property
     def is_fitted(self):
         return self.model is not None
+
+    @property
+    def parameters(self):
+        """Named GP parameters (name -> value), for inspection."""
+        self._check_fitted()
+        return dict(self.model.named_parameters())
 
     @property
     def _input_transform(self):

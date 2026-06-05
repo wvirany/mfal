@@ -114,3 +114,34 @@ def test_loss_before_fit_raises():
     model.initialize(CONT_X, CONT_Y)
     with pytest.raises(RuntimeError, match="has not been fit"):
         model.loss()
+
+
+def test_gpmodel_normalize_default_on():
+    model = GPModel()
+    model.initialize(CONT_X, CONT_Y)
+    model.fit()
+    assert model._input_transform is not None  # Normalize on by default
+
+
+def test_gpmodel_normalize_off():
+    model = GPModel(normalize=False)
+    model.initialize(CONT_X, CONT_Y)
+    model.fit()
+    assert model._input_transform is None  # no input transform
+    mean, std = model(CONT_X)
+    assert mean.shape == (8, 1) and torch.all(std > 0)
+
+
+def test_gpmodel_parameters_returns_dict():
+    model = GPModel()
+    model.initialize(CONT_X, CONT_Y)
+    model.fit()
+    params = model.parameters
+    assert isinstance(params, dict) and len(params) > 0
+
+
+def test_parameters_before_fit_raises():
+    model = GPModel()
+    model.initialize(CONT_X, CONT_Y)
+    with pytest.raises(RuntimeError, match="has not been fit"):
+        model.parameters
