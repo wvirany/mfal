@@ -102,7 +102,11 @@ class History:
             self.observed_indices.extend(observed_indices)
 
         # Compute and log metrics
-        metrics_dict = {"iteration": iteration, "optimization_time": result.optimization_time}
+        metrics_dict = {
+            "iteration": iteration,
+            "n_observed": self.n_observed,
+            "optimization_time": result.optimization_time,
+        }
         for metric_fn in self.metrics:
             metrics_dict.update(metric_fn(self))
 
@@ -121,6 +125,11 @@ class History:
     def start_iteration(self) -> int:
         """Iteration to resume from. Zero for a fresh history, correct on resume."""
         return len(self.iteration)
+
+    @property
+    def n_observed(self) -> int:
+        """Total observations so far (not including initialization)."""
+        return self.y_observed.shape[0]
 
     @property
     def X_all(self) -> Any:

@@ -275,7 +275,19 @@ The device is determined by the oracle:
 oracle = AnalyticOracle(...).to(device)
 ```
 
-Training data inherits the oracle's device via `sample_init`, and the model follows from the training data.
+This works for `LookupOracle` as well. Training data inherits the oracle's device via `sample_init`, and the model follows from the training data. Since the data in `History` is stored on the CPU, if you are running BO on a different device, it is necessary to store the initial dataset on the CPU as well (due to the concat operation in [history.py](molbo/bo/history.py)).
+
+```python
+history = History(
+    X_init=init.train_X.detach().cpu(),
+    y_init=init.train_y.detach().cpu(),
+...
+)
+```
+
+## Memory
+
+A common obstacle for running BO in the fixed-pool setting is limited memory. The typical bottleneck is evaluating the GP on $N_\text{test}$ candidates, which requires building the $N_\text{train} \times N_\text{test}$ cross-covariance matrix. This can lead to OOM errors either for large pools or as the size of the training set grows. To overcome this, the test set is evaluated in batches, shrinking the cross-covariance matrix to $N_\text{train} \times \text{batch size}$. If you are running out of memory, try reducing the `max_batch_size` parameter in [pool.py](molbo/acqf_optimizer/pool.py).
 
 ## Data types
 
