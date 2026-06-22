@@ -275,7 +275,7 @@ The device is determined by the oracle:
 oracle = AnalyticOracle(...).to(device)
 ```
 
-This works for `LookupOracle` as well. Training data inherits the oracle's device via `sample_init`, and the model follows from the training data. Since the data in `History` is stored on the CPU, if you are running BO on a different device, it is necessary to store the initial dataset on the CPU as well (due to the concat operation in [history.py](molbo/bo/history.py)).
+This works for `LookupOracle` as well. Training data inherits the oracle's device via `sample_init`, and the model follows from the training data. Since the data in `History` is stored on the CPU, if you are running BO on a different device, it is necessary to store the initial dataset on the CPU as well (due to the concat operation in [history.py](molbo/bo/history.py)):
 
 ```python
 history = History(
