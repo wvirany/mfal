@@ -9,7 +9,7 @@ class ContinuousBase(AcqfOptimizer):
     def sample_init(self, oracle, n_init: int) -> Initialization:
         self.bounds = oracle.bounds
         train_X = self.bounds[0] + (self.bounds[1] - self.bounds[0]) * torch.rand(
-            n_init, self.bounds.shape[1], dtype=torch.float64
+            n_init, self.bounds.shape[1], dtype=torch.float64, device=self.bounds.device
         )
         train_y = oracle(train_X)
         return Initialization(train_X=train_X, train_y=train_y)
