@@ -65,6 +65,7 @@ class History:
         self.iteration = []
         self.model_loss = []
         self.optimization_time = []
+        self.metrics_history = []
 
     # ------------------------------------------------------------------
     # Core update
@@ -109,6 +110,9 @@ class History:
         }
         for metric_fn in self.metrics:
             metrics_dict.update(metric_fn(self))
+
+        # Save logged metrics
+        self.metrics_history.append(metrics_dict)
 
         if self.logger is not None:
             self.logger.log(metrics_dict)
@@ -165,6 +169,7 @@ class History:
                 "iteration": self.iteration,
                 "model_loss": self.model_loss,
                 "optimization_time": self.optimization_time,
+                "metrics_history": self.metrics_history,
                 "rng_state": torch.get_rng_state(),
                 "cuda_rng_state": (
                     torch.cuda.get_rng_state() if torch.cuda.is_available() else None
@@ -202,5 +207,6 @@ class History:
         history.iteration = data["iteration"]
         history.model_loss = data["model_loss"]
         history.optimization_time = data["optimization_time"]
+        history.metrics_history = data.get("metrics_history", [])
 
         return history
